@@ -1,0 +1,71 @@
+std = "lua51"
+max_line_length = false
+self = false
+exclude_files = { ".git/**" }
+
+globals = {
+	"SLASH_TALLY1",
+	"SlashCmdList",
+	"StaticPopupDialogs",
+	"TallyDB",
+	"Tally_OnAddonCompartmentClick",
+	"Tally_OnAddonCompartmentEnter",
+	"Tally_OnAddonCompartmentLeave",
+}
+
+read_globals = {
+	-- Lua extensions of the game client
+	"date",
+	"time",
+
+	-- Game API and FrameXML
+	"BreakUpLargeNumbers",
+	"C_AddOns",
+	"C_Bank",
+	"C_Item",
+	"C_PlayerInfo",
+	"C_Spell",
+	"C_Timer",
+	"CHAT_FRAMES",
+	"CreateFrame",
+	"Enum",
+	"GetAchievementInfo",
+	"GetCategoryNumAchievements",
+	"GetCoinTextureString",
+	"GetLocale",
+	"GetLootSlotInfo",
+	"GetLootSlotLink",
+	"GetMoney",
+	"GetNormalizedRealmName",
+	"GetNumLootItems",
+	"GetProfessionInfo",
+	"GetProfessions",
+	"GetRealmName",
+	"GetStatistic",
+	"GetStatisticsCategoryList",
+	"GetTime",
+	"GetUnitSpeed",
+	"hooksecurefunc",
+	"InCombatLockdown",
+	"IsFishingLoot",
+	"IsFlying",
+	"IsMounted",
+	"issecretvalue",
+	"IsSwimming",
+	"MenuUtil",
+	"NO",
+	"RAID_CLASS_COLORS",
+	"RequestTimePlayed",
+	"Settings",
+	"StaticPopup_Show",
+	"UIParent",
+	"UISpecialFrames",
+	"UnitClass",
+	"UnitIsDeadOrGhost",
+	"UnitLevel",
+	"UnitName",
+	"UnitOnTaxi",
+	"UnitRace",
+	"UnitSex",
+	"YES",
+}

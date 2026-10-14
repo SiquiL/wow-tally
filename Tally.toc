@@ -1,0 +1,29 @@
+## Interface: 120100, 120105, 16001
+## Title: Tally
+## Notes: Counts steps, deaths, gold, quests and more per character and for the whole account.
+## Notes-deDE: Zählt Schritte, Tode, Gold, Quests und mehr pro Charakter und für den ganzen Account.
+## Version: 1.0.0
+## Author: SiquiL
+## IconTexture: Interface\Icons\INV_Misc_PocketWatch_01
+## AddonCompartmentFunc: Tally_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: Tally_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: Tally_OnAddonCompartmentLeave
+## SavedVariables: TallyDB
+## X-Website: https://github.com/SiquiL/wow-tally
+
+locales\enUS.lua
+locales\deDE.lua
+Data.lua
+Core.lua
+Milestones.lua
+UI.lua
+Export.lua
+Settings.lua
+modules\Steps.lua
+modules\Deaths.lua
+modules\Gold.lua
+modules\Quests.lua
+modules\Jumps.lua
+modules\Teleports.lua
+modules\Professions.lua
+modules\Played.lua

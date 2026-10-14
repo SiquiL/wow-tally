@@ -1,0 +1,14 @@
+# Release packages built with git archive, see README "Releasing"
+/Tally-*.zip
+
+# luacheck --cache
+.luacheckcache
+
+# Operating system files
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Development environment files
+.github/
+.vscode/
