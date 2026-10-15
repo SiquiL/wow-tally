@@ -22,6 +22,7 @@ and more. Every counter is kept per character and summed for the whole account.
 | Module      | Counts                                                                                  |
 | ----------- | --------------------------------------------------------------------------------------- |
 | Steps       | Distance on foot in steps and km, all other movement in km                              |
+| Zones       | Playtime and distance per movement mode for every visited zone                          |
 | Deaths      | How often a character has died                                                          |
 | Gold        | Gold earned and spent, and the balance on hand                                          |
 | Quests      | Quests turned in and the quest XP gained                                                |
@@ -30,11 +31,16 @@ and more. Every counter is kept per character and summed for the whole account.
 | Professions | Fish caught, herbs, ore and leather looted, items crafted and skill-ups                 |
 | Playtime    | Time played, kept in sync with the game's `/played`                                     |
 
-- **Chat report or window** — one row per character and one tab per module, plus the account total
+- **Overview and module tables** — the current character, highlighted account totals and sortable columns
+- **Character ranking** — compare every included character across all headline metrics
+- **Character filter** — include or exclude stored characters from totals, reports, rankings and exports
+- **Zone table** — account-wide playtime and distance per movement mode for every visited zone
 - **Lifetime values** — deaths, quests, fishing and hearthstone uses start from the game's own statistics, playtime from `/played`
 - **Milestones** — a chat message when a counter passes a threshold
 - **Export** — every value as CSV or JSON, ready to copy
-- **Options panel** and an entry in the addon compartment next to the minimap
+- **Options panel** — milestone announcements, empty-column handling and a window-position reset
+- **Remembered layout** — the window keeps its position and selected view between sessions
+- **Addon compartment entry** next to the minimap
 - **Addon restrictions** — secret values of patch 12.0.0 are detected and skipped instead of causing Lua errors
 - **English and German**, following the client language
 
@@ -71,7 +77,7 @@ prompt. After one restart of the client, `/reload` loads changes, unless a file 
 
 Every command starts with `/tally`, and `/tally help` lists them in game. Modules are addressed
 by their name in lower case: `steps`, `deaths`, `gold`, `quests`, `jumps`, `teleports`,
-`professions` and `played`.
+`professions`, `played` and `zones`.
 
 | Command                       | Description                                             |
 | ----------------------------- | ------------------------------------------------------- |
@@ -94,9 +100,11 @@ by their name in lower case: `steps`, `deaths`, `gold`, `quests`, `jumps`, `tele
 Resetting one module never touches another, and anything after `reset` other than `all` only
 prints the usage. The character you are logged in with cannot be removed.
 
-The window refreshes every second, can be dragged and closes with Escape. The export window
-selects its text, so it can be copied right away. The addon compartment next to the minimap
-has an entry as well: left-click toggles the window, right-click opens the options.
+The window refreshes every second, sizes itself to the active table, scrolls long tables,
+can be dragged and closes with Escape. Its toolbar opens the character filter, export and
+options. Filter and export windows dock beside the main window. The export text is selected
+automatically, so it can be copied right away. The addon compartment next to the minimap has
+an entry as well: left-click toggles the window, right-click opens the options.
 
 > [!NOTE]
 > Builds before 1.0.0 had the shortcuts `/steps` and `/deaths`. They are gone; use
@@ -181,6 +189,18 @@ other restrictions have matching variables: `addonEncounterRestrictionsForced`,
 `addonChallengeModeRestrictionsForced`, `addonPvPMatchRestrictionsForced`,
 `addonMapRestrictionsForced` and `addonChatRestrictionsForced`.
 
+### Zones
+
+Tally stores playtime and movement distance by the current `uiMapID`. Zone changes are
+detected through the zone events, with a five-second map check as a fallback. Distance comes
+from the same validated speed tick as the Steps module, so totals use identical movement
+modes and do not measure secret speed values.
+
+The Zones tab combines data from every character enabled in the character filter. It shows
+playtime, distance on foot, mounted, swimming, flying and flight paths, plus the total
+distance for each zone. Empty movement columns follow the **Hide empty columns** option.
+Dungeon, raid, battleground, arena and scenario maps are marked next to the zone name.
+
 ### Deaths
 
 A death is counted on `PLAYER_DEAD`. A state flag keeps one death from being counted twice:
@@ -257,12 +277,21 @@ Everything is stored account-wide in `TallyDB` under
 
 ```lua
 TallyDB = {
-	version = 1,
-	settings = { milestones = true },
+	version = 3,
+	settings = {
+		milestones = true,
+		hideEmpty = true,
+		hidden = {},
+		view = "overview",
+		window = { point = "CENTER", relativePoint = "CENTER", x = 0, y = 0 },
+	},
 	chars = {
 		["Name-Realm"] = {
 			race = "Scourge", sex = 2, class = "ROGUE", level = 90, lastSeen = 1760000000,
 			steps = { foot = 0, mount = 0, swim = 0, flight = 0, taxi = 0, blind = 0 },   -- yards, seconds
+			zones = {
+				[2393] = { time = 3600, f = 1250, m = 8400, kind = "party" },             -- seconds, yards
+			},
 			deaths = { count = 0, seeded = true },
 			gold = { earned = 0, spent = 0, current = 0 },                                -- copper
 			milestones = { ["steps.total"] = 10 },
@@ -272,10 +301,11 @@ TallyDB = {
 }
 ```
 
-`version` is the version of the stored data layout, 1 as of Tally 1.0.0; data from earlier
-builds is converted when the addon loads. `seeded` marks a module whose counter was raised to
-the game's statistic. The file is named after the addon folder, which is one more reason the
-folder has to stay `Tally`.
+`version` is the version of the stored data layout, 3 as of Tally 1.2.0; data from earlier
+builds is converted when the addon loads. Zone distances use the sparse keys `f` (foot),
+`m` (mounted), `s` (swimming), `a` (air/flying) and `t` (taxi), and only modes with data are
+written. `seeded` marks a module whose counter was raised to the game's statistic. The file
+is named after the addon folder, which is one more reason the folder has to stay `Tally`.
 
 > [!WARNING]
 > The client only writes that file on `/reload`, when logging out to the character screen and
@@ -317,7 +347,7 @@ interface versions are the recommended way to support several clients.
 - The playtime of other characters is as of their last logout.
 - Combat Log events are no longer available to addons since patch 12.0.0, so kills and
   the killer behind a death are not tracked.
-- The window has no scroll bar and is meant for a moderate number of characters.
+- Very wide tables have no horizontal scroll bar; the window sizes itself to their columns.
 - Output is available in English and German only.
 - There is no minimap button; the addon compartment entry and the options panel replace it.
 - Spells, toys and statistics that do not exist on a client are never counted. `/tally ids`
@@ -339,6 +369,7 @@ interface versions are the recommended way to support several clients.
 | `locales\enUS.lua`        | Translation table; the English text is the key                                       |
 | `locales\deDE.lua`        | German translation                                                                   |
 | `modules\Steps.lua`       | Distance tracking and step report                                                    |
+| `modules\Zones.lua`       | Playtime and movement distance per zone                                              |
 | `modules\Deaths.lua`      | Death counter                                                                        |
 | `modules\Gold.lua`        | Gold earned, spent and on hand                                                       |
 | `modules\Quests.lua`      | Quests turned in and quest XP                                                        |
@@ -378,6 +409,7 @@ function module:OnLogout(section) end     -- optional
 function module:Debug(section) end        -- optional, extra lines for /tally debug
 function module:Subtitle(charData) end    -- optional, appended to the report heading
 function module:ReportExtra() end         -- optional, printed after the report
+function module:BuildView() end           -- optional, custom table model for the module tab
 
 -- Required. Entries drive the report, /tally all, the window, the export and milestones.
 function module:Summary(charData)
@@ -423,12 +455,12 @@ Raise `## Version` in `Tally.toc` and commit. Then tag that commit and build a z
 folder is `Tally`, so it can be extracted into `Interface\AddOns` as it is:
 
 ```powershell
-git tag v1.1.0
-git push origin main v1.1.0
-git archive --format zip --prefix Tally/ --output Tally-1.1.0.zip v1.1.0
+git tag v1.2.0
+git push origin main v1.2.0
+git archive --format zip --prefix Tally/ --output Tally-1.2.0.zip v1.2.0
 ```
 
-Create the GitHub release from that tag and attach `Tally-1.1.0.zip`. The release badge at
+Create the GitHub release from that tag and attach `Tally-1.2.0.zip`. The release badge at
 the top of this file follows the newest release on its own.
 
 `.gitattributes` marks everything the game does not load (README, `docs`, `assets` and the
