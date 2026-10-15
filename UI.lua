@@ -667,7 +667,6 @@ local function BuildCharacterFilter()
 	local x = 14
 	for _, action in ipairs({
 		{ label = L["All"], mode = "all" },
-		{ label = L["None"], mode = "none" },
 		{ label = L["Only current"], mode = "current" },
 	}) do
 		local current = action
