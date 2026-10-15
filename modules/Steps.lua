@@ -185,7 +185,6 @@ function module:Summary(charData)
 		label = L["Not measurable (restricted)"],
 		value = section.blind or 0,
 		unit = "s",
-		headerUnit = ns.UNIT_DURATION,
 		fmt = ns.FormatDuration,
 		optional = true,
 	}
