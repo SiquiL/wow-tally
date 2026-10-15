@@ -23,6 +23,10 @@ local INSTANCE_LABELS = {
 	arena = L["Arena"],
 	scenario = L["Scenario"],
 }
+local HIDDEN_MAP_IDS = {
+	[12] = true, -- Kalimdor
+	[13] = true, -- Eastern Kingdoms
+}
 
 local zones
 local currentMapID
@@ -220,7 +224,7 @@ function module:BuildView()
 	local rows = {}
 	for mapID, entry in pairs(combined) do
 		local totalYards = TotalYards(entry)
-		if entry.time > 0 or totalYards > 0 then
+		if not HIDDEN_MAP_IDS[mapID] and (entry.time > 0 or totalYards > 0) then
 			local name = ZoneName(mapID, entry.kind)
 			local cells = {
 				{ text = name, sort = name:lower() },

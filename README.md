@@ -31,10 +31,10 @@ and more. Every counter is kept per character and summed for the whole account.
 | Professions | Fish caught, herbs, ore and leather looted, items crafted and skill-ups                 |
 | Playtime    | Time played, kept in sync with the game's `/played`                                     |
 
-- **Overview and module tables** — the current character, highlighted account totals and sortable columns
-- **Character ranking** — compare every included character across all headline metrics
+- **Overview and module tables** — the current character and highlighted account totals in a consistent module order
+- **Character ranking** — compare every included character across selected headline metrics
 - **Character filter** — include or exclude stored characters from totals, reports, rankings and exports, reset or remove them
-- **Zone table** — account-wide playtime and distance per movement mode for every visited zone
+- **Zone table** — account-wide playtime and distance per movement mode for every visited zone, excluding continent overview maps
 - **Lifetime values** — deaths, quests, fishing and hearthstone uses start from the game's own statistics, playtime from `/played`
 - **Milestones** — a chat message when a counter passes a threshold
 - **Export** — every value as CSV or JSON, ready to copy

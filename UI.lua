@@ -246,11 +246,16 @@ end
 
 local function BuildOverview()
 	local columns = {
-		{ key = "statistic", label = L["Statistic"], align = "LEFT", sortType = "text" },
-		{ key = "character", label = ns.CharLabel(ns.charKey, ns.char), align = "RIGHT", sortType = "number" },
-		{ key = "account", label = L["Account total"], align = "RIGHT", sortType = "number" },
+		{ key = "statistic", label = L["Statistic"], align = "LEFT", sortable = false },
+		{ key = "character", label = ns.CharLabel(ns.charKey, ns.char), align = "RIGHT", sortable = false },
+		{ key = "account", label = L["Account total"], align = "RIGHT", sortable = false },
 	}
 	local rows = {}
+	local showAllEntries = {
+		professions = true,
+		quests = true,
+		teleports = true,
+	}
 
 	for _, module in ipairs(ns.moduleList) do
 		local characterEntries = ns.GetEntries(module, ns.char)
@@ -261,7 +266,7 @@ local function BuildOverview()
 		end
 
 		for _, entry in ipairs(characterEntries or {}) do
-			if entry.total then
+			if entry.total or showAllEntries[module.key] then
 				local label = OverviewLabel(module, entry)
 				rows[#rows + 1] = {
 					key = module.key .. "." .. entry.key,
@@ -275,12 +280,12 @@ local function BuildOverview()
 		end
 	end
 
-	return { columns = columns, rows = rows }
+	return { columns = columns, rows = rows, fixedOrder = true }
 end
 
 local function BuildRanking()
 	local columns = {
-		{ key = "rank", label = L["Rank"], align = "RIGHT", sortable = false, minWidth = 32 },
+		{ key = "rank", label = L["Rank"], align = "LEFT", sortable = false, minWidth = 32 },
 		{
 			key = "character",
 			label = L["Character"],
@@ -295,7 +300,9 @@ local function BuildRanking()
 
 	for _, module in ipairs(ns.moduleList) do
 		for _, entry in ipairs(ns.AccountEntries(module)) do
-			if entry.total then
+			local excluded = (module.key == "gold" and entry.key == "current")
+				or (module.key == "professions" and entry.key == "fish")
+			if entry.total and not excluded then
 				local key = module.key .. "." .. entry.key
 				metrics[#metrics + 1] = { columnKey = key }
 				columns[#columns + 1] = {
@@ -370,6 +377,10 @@ local function EnsureModuleViews()
 end
 
 local function SortRows(model)
+	if model.fixedOrder then
+		return
+	end
+
 	local state = sortStates[selected.key]
 	if not state then
 		state = model.defaultSort or { key = model.columns[1].key, direction = "asc" }
@@ -619,7 +630,7 @@ local function Refresh()
 		button:SetText(SortLabel(current))
 		button:EnableMouse(current.sortable ~= false)
 		local sortState = sortStates[selected.key]
-		if sortState and sortState.key == current.key then
+		if current.sortable ~= false and sortState and sortState.key == current.key then
 			button:GetFontString():SetTextColor(1, 0.82, 0)
 		else
 			button:GetFontString():SetTextColor(1, 1, 1)
