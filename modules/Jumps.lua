@@ -17,7 +17,7 @@ end
 
 function module:Summary(charData)
 	return {
-		{ key = "count", label = L["Jumps"], value = charData.jumps.count or 0, headerUnit = ns.UNIT_COUNT, total = true },
+		{ key = "count", label = L["Jumps"], value = charData.jumps.count or 0, total = true },
 	}
 end
 

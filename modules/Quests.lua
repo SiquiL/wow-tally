@@ -27,8 +27,8 @@ end
 function module:Summary(charData)
 	local section = charData.quests
 	return {
-		{ key = "count", label = L["Turned in"], value = section.count or 0, headerUnit = ns.UNIT_COUNT, total = true },
-		{ key = "xp", label = L["Quest XP"], value = section.xp or 0, unit = "xp", headerUnit = L["XP"] },
+		{ key = "count", label = L["Turned in"], value = section.count or 0, total = true },
+		{ key = "xp", label = L["Quest XP"], value = section.xp or 0, unit = "xp" },
 	}
 end
 

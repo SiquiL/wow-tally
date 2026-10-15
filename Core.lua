@@ -9,10 +9,7 @@ local INVALID = "|cffff5555" .. L["invalid"] .. "|r"
 -- issecretvalue only exists from patch 12.0.0 onwards
 ns.isSecret = issecretvalue or function() return false end
 
--- Units shown in the column headers of the window
-ns.UNIT_COUNT = L["count"]
 ns.UNIT_DURATION = "d / h / m / s"
-ns.UNIT_MONEY = "g / s / c"
 
 ns.modules = {}
 ns.moduleList = {}

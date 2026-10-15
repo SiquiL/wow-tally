@@ -38,7 +38,7 @@ end
 
 function module:Summary(charData)
 	return {
-		{ key = "deaths", label = L["Deaths"], value = charData.deaths.count or 0, headerUnit = ns.UNIT_COUNT, total = true },
+		{ key = "deaths", label = L["Deaths"], value = charData.deaths.count or 0, total = true },
 	}
 end
 
