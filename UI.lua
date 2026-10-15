@@ -419,11 +419,7 @@ local function SortRows(model)
 end
 
 local function SortLabel(column)
-	local state = sortStates[selected.key]
-	if not state or state.key ~= column.key then
-		return column.label
-	end
-	return column.label .. (state.direction == "asc" and " ^" or " v")
+	return column.label
 end
 
 local function Measure(font, text)
@@ -616,6 +612,12 @@ local function Refresh()
 		button:GetFontString():SetJustifyH(current.align)
 		button.column = current
 		button:SetText(SortLabel(current))
+		local sortState = sortStates[selected.key]
+		if sortState and sortState.key == current.key then
+			button:GetFontString():SetTextColor(1, 0.82, 0)
+		else
+			button:GetFontString():SetTextColor(1, 1, 1)
+		end
 		button:SetScript("OnClick", function()
 			if current.sortable ~= false then
 				SetSort(current)
