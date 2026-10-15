@@ -33,7 +33,7 @@ and more. Every counter is kept per character and summed for the whole account.
 
 - **Overview and module tables** — the current character with a 3D model and class portrait, plus highlighted account totals in a consistent module order
 - **Character ranking** — compare every included character across selected headline metrics
-- **Character filter** — include or exclude stored characters from totals, reports, rankings and exports, reset or remove them
+- **Character filter** — identify stored characters by class icon, include or exclude them from totals, reports, rankings and exports, reset or remove them
 - **Zone table** — account-wide playtime and distance per movement mode for every visited zone, excluding continent overview maps
 - **Lifetime values** — deaths, quests, fishing and hearthstone uses start from the game's own statistics, playtime from `/played`
 - **Milestones** — a chat message when a counter passes a threshold

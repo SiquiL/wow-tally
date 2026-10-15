@@ -23,6 +23,7 @@ local FILTER_ICON = "Interface\\Icons\\INV_Misc_GroupNeedMore"
 local EXPORT_ICON = "Interface\\Icons\\INV_Scroll_03"
 local OPTIONS_ICON = "Interface\\Icons\\Trade_Engineering"
 local RESET_ICON = "Interface\\Icons\\Ability_Hunter_Readiness"
+local CLASS_ICON_TEXTURE = "Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
 local VALID_POINTS = {
 	TOPLEFT = true,
 	TOP = true,
@@ -741,6 +742,20 @@ local function RenderCharacterFilter()
 		if character then
 			row.key = character.key
 			row.label:SetText(ns.CharLabel(character.key, character.data))
+			local coords = character.data.class and CLASS_ICON_TCOORDS[character.data.class]
+			row.classIcon:SetShown(coords ~= nil)
+			if coords then
+				row.classIcon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
+			end
+			row.label:ClearAllPoints()
+			row.label:SetPoint(
+				"LEFT",
+				coords and row.classIcon or row.checkbox,
+				"RIGHT",
+				coords and 5 or 4,
+				0
+			)
+			row.label:SetPoint("RIGHT", row, "RIGHT", -60, 0)
 			row.checkbox:SetChecked(ns.IsCharacterVisible(character.key))
 			row.checkbox:SetEnabled(character.key ~= ns.charKey)
 			row.remove:SetEnabled(character.key ~= ns.charKey)
@@ -780,8 +795,13 @@ local function CharacterFilterRow(slot)
 		GameTooltip:Hide()
 	end)
 
+	row.classIcon = row:CreateTexture(nil, "ARTWORK")
+	row.classIcon:SetSize(18, 18)
+	row.classIcon:SetPoint("LEFT", row.checkbox, "RIGHT", 4, 0)
+	row.classIcon:SetTexture(CLASS_ICON_TEXTURE)
+
 	row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	row.label:SetPoint("LEFT", row.checkbox, "RIGHT", 4, 0)
+	row.label:SetPoint("LEFT", row.classIcon, "RIGHT", 5, 0)
 	row.label:SetPoint("RIGHT", row, "RIGHT", -60, 0)
 	row.label:SetJustifyH("LEFT")
 	row.label:SetWordWrap(false)
@@ -986,7 +1006,7 @@ local function Build()
 	characterPortrait = characterPanel:CreateTexture(nil, "ARTWORK")
 	characterPortrait:SetSize(36, 36)
 	characterPortrait:SetPoint("CENTER", portraitBackground)
-	characterPortrait:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
+	characterPortrait:SetTexture(CLASS_ICON_TEXTURE)
 
 	characterName = characterPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	characterName:SetPoint("BOTTOMLEFT", portraitBackground, "BOTTOMRIGHT", 8, 23)
