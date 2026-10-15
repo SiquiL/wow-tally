@@ -26,7 +26,9 @@ local function PrepareLinkTemplate()
 		box:SetFontObject("GameFontHighlightSmall")
 		box:SetScript("OnEscapePressed", box.ClearFocus)
 		box:SetScript("OnEnterPressed", box.ClearFocus)
-		box:SetScript("OnEditFocusGained", box.HighlightText)
+		box:SetScript("OnEditFocusGained", function(editBox)
+			editBox:HighlightText()
+		end)
 		-- A click places the cursor, so the address is selected again afterwards.
 		-- OnMouseUp passes the button name, which HighlightText would read as an index.
 		box:SetScript("OnMouseUp", function(editBox)
@@ -50,6 +52,10 @@ local function PrepareLinkTemplate()
 		box:SetScript("OnLeave", function()
 			GameTooltip:Hide()
 		end)
+		local logo = self:CreateTexture(nil, "ARTWORK")
+		logo:SetSize(18, 18)
+		logo:SetPoint("RIGHT", box, "LEFT", -6, 0)
+		logo:SetTexture("Interface\\AddOns\\Tally\\assets\\settings\\github-mark")
 		self.Link = box
 	end
 
