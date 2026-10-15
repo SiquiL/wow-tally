@@ -3,6 +3,9 @@ local L = ns.L
 
 local window
 local scroll
+local edit
+local formatButtons = {}
+local SetFormat
 
 local function Number(value)
 	if value == math.floor(value) then
@@ -83,14 +86,28 @@ end
 local function Build()
 	window = ns.CreateWindow("TallyExportWindow", 560, 420, L["Tally export"])
 
+	local x = 14
+	for _, format in ipairs({ "csv", "json" }) do
+		local current = format
+		local button = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+		button:SetText(current:upper())
+		button:SetSize(64, 22)
+		button:SetPoint("TOPLEFT", x, -30)
+		button:SetScript("OnClick", function()
+			SetFormat(current)
+		end)
+		formatButtons[current] = button
+		x = x + 68
+	end
+
 	scroll = CreateFrame("ScrollFrame", nil, window, "InputScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", 14, -34)
+	scroll:SetPoint("TOPLEFT", 14, -60)
 	scroll:SetPoint("BOTTOMRIGHT", -14, 14)
 	if scroll.CharCount then
 		scroll.CharCount:Hide()
 	end
 
-	local edit = scroll.EditBox
+	edit = scroll.EditBox
 	edit:SetFontObject("ChatFontNormal")
 	edit:SetWidth(520)
 	edit:SetScript("OnEscapePressed", function()
@@ -103,6 +120,18 @@ local function Build()
 			self:HighlightText()
 		end
 	end)
+end
+
+SetFormat = function(format)
+	for key, button in pairs(formatButtons) do
+		button:SetEnabled(key ~= format)
+	end
+
+	local rows = CollectRows()
+	window.text = format == "json" and ToJSON(rows) or ToCSV(rows)
+	edit:SetText(window.text)
+	edit:HighlightText()
+	edit:SetFocus()
 end
 
 ns.RegisterCommand("export", function(rest)
@@ -121,10 +150,6 @@ ns.RegisterCommand("export", function(rest)
 		end
 	end
 
-	local rows = CollectRows()
-	window.text = format == "json" and ToJSON(rows) or ToCSV(rows)
 	window:Show()
-	scroll.EditBox:SetText(window.text)
-	scroll.EditBox:HighlightText()
-	scroll.EditBox:SetFocus()
+	SetFormat(format)
 end, L["/tally export [csv|json] – copyable export of all values"])

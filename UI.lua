@@ -15,6 +15,7 @@ local scroll
 local measure
 local headerBackground
 local selected
+local optionsButton
 local tabs = {}
 local tabsWidth = 0
 local headerButtons = {}
@@ -319,6 +320,10 @@ local function Refresh()
 		return
 	end
 
+	if optionsButton then
+		optionsButton:SetEnabled(not InCombatLockdown())
+	end
+
 	local ok, model = pcall(selected.Build, selected)
 	if not ok then
 		if not failedViews[selected.key] then
@@ -425,6 +430,26 @@ local function Build()
 		x = x + tab:GetWidth() + TAB_GAP
 		tabs[index] = tab
 	end
+
+	x = x + 8
+	local exportButton = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+	exportButton:SetText(L["Export"])
+	exportButton:SetSize(exportButton:GetTextWidth() + TAB_PADDING, TAB_HEIGHT)
+	exportButton:SetPoint("TOPLEFT", x, -30)
+	exportButton:SetScript("OnClick", function()
+		ns.commands.export("")
+	end)
+	x = x + exportButton:GetWidth() + TAB_GAP
+
+	optionsButton = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+	optionsButton:SetText(L["Options"])
+	optionsButton:SetSize(optionsButton:GetTextWidth() + TAB_PADDING, TAB_HEIGHT)
+	optionsButton:SetPoint("TOPLEFT", x, -30)
+	optionsButton:SetScript("OnClick", function()
+		ns.commands.options("")
+	end)
+	x = x + optionsButton:GetWidth() + TAB_GAP
+
 	tabsWidth = x - TAB_GAP + 12
 end
 
