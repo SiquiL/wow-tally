@@ -33,7 +33,7 @@ and more. Every counter is kept per character and summed for the whole account.
 
 - **Overview and module tables** — the current character, highlighted account totals and sortable columns
 - **Character ranking** — compare every included character across all headline metrics
-- **Character filter** — include or exclude stored characters from totals, reports, rankings and exports
+- **Character filter** — include or exclude stored characters from totals, reports, rankings and exports, reset or remove them
 - **Zone table** — account-wide playtime and distance per movement mode for every visited zone
 - **Lifetime values** — deaths, quests, fishing and hearthstone uses start from the game's own statistics, playtime from `/played`
 - **Milestones** — a chat message when a counter passes a threshold
@@ -99,6 +99,10 @@ by their name in lower case: `steps`, `deaths`, `gold`, `quests`, `jumps`, `tele
 
 Resetting one module never touches another, and anything after `reset` other than `all` only
 prints the usage. The character you are logged in with cannot be removed.
+
+Every row of the character filter also has a reset button that clears all statistics of that
+character at once, including the character you are logged in with. Both reset and remove ask
+for confirmation first.
 
 The window refreshes every second, sizes itself to the active table, scrolls long tables,
 can be dragged and closes with Escape. Its toolbar opens the character filter, export and

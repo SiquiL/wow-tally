@@ -18,6 +18,7 @@ local TOOLBAR_GAP = 12
 local FILTER_ICON = "Interface\\Icons\\INV_Misc_GroupNeedMore"
 local EXPORT_ICON = "Interface\\Icons\\INV_Scroll_03"
 local OPTIONS_ICON = "Interface\\Icons\\Trade_Engineering"
+local RESET_ICON = "Interface\\Icons\\Ability_Hunter_Readiness"
 local VALID_POINTS = {
 	TOPLEFT = true,
 	TOP = true,
@@ -715,9 +716,34 @@ local function CharacterFilterRow(slot)
 
 	row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	row.label:SetPoint("LEFT", row.checkbox, "RIGHT", 4, 0)
-	row.label:SetPoint("RIGHT", row, "RIGHT", -32, 0)
+	row.label:SetPoint("RIGHT", row, "RIGHT", -60, 0)
 	row.label:SetJustifyH("LEFT")
 	row.label:SetWordWrap(false)
+
+	row.reset = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+	row.reset:SetSize(24, 20)
+	row.reset:SetPoint("RIGHT", row, "RIGHT", -28, 0)
+	row.reset.icon = row.reset:CreateTexture(nil, "ARTWORK")
+	row.reset.icon:SetPoint("TOPLEFT", 4, -3)
+	row.reset.icon:SetPoint("BOTTOMRIGHT", -4, 3)
+	row.reset.icon:SetTexture(RESET_ICON)
+	row.reset.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+	row.reset:SetScript("OnClick", function()
+		ns.ResetCharacter(row.key, function()
+			Refresh()
+			if ns.RefreshExport then
+				ns.RefreshExport()
+			end
+		end)
+	end)
+	row.reset:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(L["Reset all statistics of this character."])
+		GameTooltip:Show()
+	end)
+	row.reset:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 
 	row.remove = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
 	row.remove:SetSize(24, 20)

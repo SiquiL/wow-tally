@@ -421,6 +421,46 @@ local function ResetModule(module, all)
 	end
 end
 
+-- Unlike a module reset this also drops fields without a default, such as the zone map
+local function WipeSection(module, section)
+	local keep = module.keepOnReset or {}
+	for field in pairs(section) do
+		if not keep[field] then
+			section[field] = nil
+		end
+	end
+	ResetSection(module, section)
+end
+
+function ns.ResetCharacter(name, onReset)
+	local found
+	for key in pairs(TallyDB.chars) do
+		if key:lower() == name:lower() then
+			found = key
+			break
+		end
+	end
+
+	if not found then
+		ns.Say(L["No stored character %s"]:format(name))
+		return
+	end
+
+	ns.Confirm(L["Reset all Tally statistics of %s?"]:format(found), function()
+		local data = TallyDB.chars[found]
+		for _, module in ipairs(ns.moduleList) do
+			if data[module.key] then
+				WipeSection(module, data[module.key])
+			end
+		end
+		data.milestones = {}
+		ns.Say(L["Statistics of %s have been reset."]:format(found))
+		if onReset then
+			onReset(found)
+		end
+	end)
+end
+
 local function RunModuleCommand(module, args)
 	local command, rest = args:match("^(%S*)%s*(.-)$")
 
