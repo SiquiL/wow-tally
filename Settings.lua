@@ -55,7 +55,7 @@ local function PrepareLinkTemplate()
 		local logo = self:CreateTexture(nil, "ARTWORK")
 		logo:SetSize(18, 18)
 		logo:SetPoint("RIGHT", box, "LEFT", -6, 0)
-		logo:SetTexture("Interface\\AddOns\\Tally\\assets\\settings\\github-mark")
+		logo:SetTexture("Interface\\AddOns\\Tally\\Textures\\GitHubMark")
 		self.Link = box
 	end
 

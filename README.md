@@ -377,6 +377,7 @@ interface versions are the recommended way to support several clients.
 | `Export.lua`              | CSV and JSON export                                                                  |
 | `Settings.lua`            | Options panel, `/tally options`, addon compartment                                   |
 | `Settings.xml`            | Template for the link row of the options panel                                       |
+| `Textures\GitHubMark.tga` | GitHub mark shown in the options panel                                                |
 | `locales\enUS.lua`        | Translation table; the English text is the key                                       |
 | `locales\deDE.lua`        | German translation                                                                   |
 | `modules\Steps.lua`       | Distance tracking and step report                                                    |
@@ -474,6 +475,6 @@ git archive --format zip --prefix Tally/ --output Tally-1.2.0.zip v1.2.0
 Create the GitHub release from that tag and attach `Tally-1.2.0.zip`. The release badge at
 the top of this file follows the newest release on its own.
 
-`.gitattributes` marks everything the game does not load (README, `docs`, `assets` and the
-tool configuration) as `export-ignore`. Neither this zip nor the _Source code_ archives that
-GitHub generates contain those files.
+`.gitattributes` marks everything the game does not load (README, `docs`, documentation
+`assets` and the tool configuration) as `export-ignore`. Runtime files such as `Textures`
+remain in both this zip and the _Source code_ archives that GitHub generates.
