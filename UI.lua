@@ -50,15 +50,18 @@ local function Text(index, font)
 	return fs
 end
 
-local function CellText(entry, column)
+local function CellText(entry)
 	if not entry then
 		return "–"
 	end
-	local text, extra = ns.FormatEntry(entry)
-	if column.total and extra then
-		text = text .. " " .. extra
+	return ns.FormatCell(entry)
+end
+
+local function HeaderText(entry)
+	if entry.headerUnit then
+		return ("%s (%s)"):format(entry.label, entry.headerUnit)
 	end
-	return text
+	return entry.label
 end
 
 local function Refresh()
@@ -74,7 +77,7 @@ local function Refresh()
 	local columns = {}
 	for _, entry in ipairs(totals) do
 		if ns.IsVisible(entry) then
-			columns[#columns + 1] = { key = entry.key, label = entry.label, total = entry.total, width = 0 }
+			columns[#columns + 1] = { key = entry.key, label = HeaderText(entry), width = 0 }
 		end
 	end
 
@@ -103,7 +106,7 @@ local function Refresh()
 		end
 		local cells = {}
 		for index, column in ipairs(columns) do
-			cells[index] = CellText(byKey[column.key], column)
+			cells[index] = CellText(byKey[column.key])
 		end
 		return cells
 	end

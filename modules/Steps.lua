@@ -3,13 +3,13 @@ local L = ns.L
 
 local MODE_INTERVAL = 0.1
 
--- steps = false: the distance counts, but a flight path or flying mount is not walking
+-- Only walking counts steps; every other mode is shown in kilometers
 local MODES = {
 	{ key = "foot", label = L["On foot"], steps = true },
-	{ key = "mount", label = L["Mounted"], steps = true },
-	{ key = "swim", label = L["Swimming"], steps = true },
-	{ key = "flight", label = L["Flying"], steps = false },
-	{ key = "taxi", label = L["Flight path"], steps = false },
+	{ key = "mount", label = L["Mounted"], steps = false },
+	{ key = "swim", label = L["Swimming"], steps = false },
+	{ key = "flight", label = L["Flying"], steps = false, optional = true },
+	{ key = "taxi", label = L["Flight path"], steps = false, optional = true },
 }
 
 local GetGlidingInfo = C_PlayerInfo and C_PlayerInfo.GetGlidingInfo
@@ -28,13 +28,17 @@ local function FormatStepsKm(count, km)
 	return ns.FormatCount(count), L["steps (%.2f km)"]:format(km)
 end
 
-local function FormatKm(_, km)
+local function FormatKm(km)
 	return ("%.2f km"):format(km)
 end
 
--- The total also contains flying, which adds distance but no steps
-local function FormatKmSteps(count, km)
-	return FormatKm(count, km), L["(%s steps)"]:format(ns.FormatCount(count))
+-- Table cells carry no unit; the column header names it
+local function CellStepsKm(count, km)
+	return ns.FormatCount(count) .. " / " .. ("%.2f"):format(km)
+end
+
+local function CellKm(km)
+	return ("%.2f"):format(km)
 end
 
 local function CurrentMode()
@@ -83,7 +87,7 @@ local module = {
 	label = L["Steps"],
 	defaults = { foot = 0, mount = 0, swim = 0, flight = 0, taxi = 0, blind = 0 },
 	milestones = {
-		{ key = "total", field = "value2", thresholds = { 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000 }, text = L["%s km travelled"] },
+		{ key = "total", thresholds = { 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000 }, text = L["%s km travelled"] },
 	},
 }
 
@@ -107,7 +111,7 @@ function module:ReportExtra()
 	local km = 0
 	for _, entry in ipairs((ns.AccountEntries(self))) do
 		if entry.key == "total" then
-			km = entry.value2
+			km = entry.value
 		end
 	end
 	if km <= 0 then
@@ -133,37 +137,46 @@ function module:Summary(charData)
 	local section = charData.steps
 	local stepLength = ns.GetStepLength(charData.race, charData.sex)
 	local entries = {}
-	local totalSteps, totalKm = 0, 0
+	local totalKm = 0
 
 	for _, mode in ipairs(MODES) do
 		local count, km = StepsAndKm(section[mode.key], stepLength)
-		if mode.steps then
-			totalSteps = totalSteps + count
-		else
-			count = 0
-		end
 		totalKm = totalKm + km
 
-		entries[#entries + 1] = {
-			key = mode.key,
-			label = mode.label,
-			value = count,
-			value2 = km,
-			unit = "steps",
-			unit2 = "km",
-			fmt = mode.steps and FormatStepsKm or FormatKm,
-			optional = not mode.steps,
-		}
+		if mode.steps then
+			entries[#entries + 1] = {
+				key = mode.key,
+				label = mode.label,
+				value = count,
+				value2 = km,
+				unit = "steps",
+				unit2 = "km",
+				headerUnit = L["steps / km"],
+				fmt = FormatStepsKm,
+				cell = CellStepsKm,
+			}
+		else
+			entries[#entries + 1] = {
+				key = mode.key,
+				label = mode.label,
+				value = km,
+				unit = "km",
+				headerUnit = "km",
+				fmt = FormatKm,
+				cell = CellKm,
+				optional = mode.optional,
+			}
+		end
 	end
 
 	entries[#entries + 1] = {
 		key = "total",
 		label = L["Total distance"],
-		value = totalSteps,
-		value2 = totalKm,
-		unit = "steps",
-		unit2 = "km",
-		fmt = FormatKmSteps,
+		value = totalKm,
+		unit = "km",
+		headerUnit = "km",
+		fmt = FormatKm,
+		cell = CellKm,
 		total = true,
 	}
 
