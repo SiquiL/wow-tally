@@ -27,6 +27,7 @@ read_globals = {
 	"C_Spell",
 	"C_Timer",
 	"CHAT_FRAMES",
+	"CreateSettingsButtonInitializer",
 	"CreateFrame",
 	"Enum",
 	"FauxScrollFrame_GetOffset",

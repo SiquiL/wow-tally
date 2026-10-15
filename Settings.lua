@@ -40,11 +40,13 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 	Settings.CreateCheckbox(category, hideEmpty, L["Hide table columns that contain no recorded values."])
 	registered.hideEmpty = hideEmpty
 
-	if Settings.CreateButton then
-		layout:AddInitializer(Settings.CreateButton(
-			L["Reset window position"],
-			L["Move the Tally window back to the center of the screen."],
-			ns.ResetWindowPosition
+	if CreateSettingsButtonInitializer then
+		local resetLabel = L["Reset window position"]
+		layout:AddInitializer(CreateSettingsButtonInitializer(
+			resetLabel,
+			resetLabel,
+			ns.ResetWindowPosition,
+			L["Move the Tally window back to the center of the screen."]
 		))
 	end
 	Settings.RegisterAddOnCategory(category)
