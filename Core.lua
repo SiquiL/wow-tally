@@ -1,7 +1,7 @@
 local addonName, ns = ...
 local L = ns.L
 
-local DB_VERSION = 1
+local DB_VERSION = 2
 local SEED_DELAY = 3
 local PREFIX = "|cff33ff99Tally|r: "
 local INVALID = "|cffff5555" .. L["invalid"] .. "|r"
@@ -540,6 +540,35 @@ end, L["/tally ids [text] – check the configured IDs or search the game statis
 
 -- Database -------------------------------------------------------------------
 
+local function MigrateDB(version)
+	if version < 1 then
+		-- Builds before 1.0.0 kept the step counters directly on the character record
+		for _, data in pairs(TallyDB.chars) do
+			if data.foot or data.mount or data.swim then
+				data.steps = data.steps or { foot = data.foot or 0, mount = data.mount or 0, swim = data.swim or 0 }
+				data.foot, data.mount, data.swim = nil, nil, nil
+			end
+		end
+	end
+
+	if version < 2 then
+		local settings = TallyDB.settings
+		settings.hidden = settings.hidden or {}
+		if settings.hideEmpty == nil then
+			settings.hideEmpty = true
+		end
+		settings.view = settings.view or "overview"
+		settings.window = settings.window or {
+			point = "CENTER",
+			relativePoint = "CENTER",
+			x = 0,
+			y = 0,
+			width = 620,
+			height = 420,
+		}
+	end
+end
+
 local function InitDB()
 	TallyDB = TallyDB or {}
 	TallyDB.chars = TallyDB.chars or {}
@@ -549,15 +578,11 @@ local function InitDB()
 		TallyDB.settings.milestones = true
 	end
 
-	-- Builds before 1.0.0 kept the step counters directly on the character record
-	for _, data in pairs(TallyDB.chars) do
-		if data.foot or data.mount or data.swim then
-			data.steps = data.steps or { foot = data.foot or 0, mount = data.mount or 0, swim = data.swim or 0 }
-			data.foot, data.mount, data.swim = nil, nil, nil
-		end
+	local version = tonumber(TallyDB.version) or 0
+	if version < DB_VERSION then
+		MigrateDB(version)
+		TallyDB.version = DB_VERSION
 	end
-
-	TallyDB.version = DB_VERSION
 end
 
 -- Returns the keys of modules whose section did not exist before this login
