@@ -9,6 +9,9 @@ local TABLE_TOP = -(32 + TAB_HEIGHT + 8)
 local MARGIN = 14
 local COLUMN_GAP = 16
 local SCROLL_WIDTH = 20
+local ICON_SIZE = 22
+local EXPORT_ICON = "Interface\\Icons\\INV_Scroll_03"
+local OPTIONS_ICON = "Interface\\Icons\\Trade_Engineering"
 
 local window
 local scroll
@@ -54,6 +57,46 @@ function ns.CreateWindow(name, width, height, title)
 	created:Hide()
 	table.insert(UISpecialFrames, name)
 	return created
+end
+
+-- An icon button has no label, so its meaning lives in the tooltip
+local function IconButton(icon, tooltip, disabledTooltip, onClick)
+	local button = CreateFrame("Button", nil, window)
+	button:SetSize(ICON_SIZE, ICON_SIZE)
+
+	local backdrop = button:CreateTexture(nil, "BACKGROUND")
+	backdrop:SetPoint("TOPLEFT", -1, 1)
+	backdrop:SetPoint("BOTTOMRIGHT", 1, -1)
+	backdrop:SetColorTexture(0, 0, 0, 0.8)
+
+	-- Icon art carries a border that does not fit a flat button
+	button.icon = button:CreateTexture(nil, "ARTWORK")
+	button.icon:SetAllPoints()
+	button.icon:SetTexture(icon)
+	button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+	button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+	button:SetScript("OnClick", onClick)
+	button:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(tooltip)
+		if disabledTooltip and not self:IsEnabled() then
+			GameTooltip:AddLine(disabledTooltip, 1, 0.3, 0.3, true)
+		end
+		GameTooltip:Show()
+	end)
+	button:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+
+	return button
+end
+
+-- A disabled button still answers OnEnter, so the tooltip can explain why
+local function SetIconEnabled(button, enabled)
+	button:SetEnabled(enabled)
+	button.icon:SetDesaturated(not enabled)
+	button.icon:SetAlpha(enabled and 1 or 0.35)
 end
 
 local function HeaderText(entry)
@@ -321,7 +364,7 @@ local function Refresh()
 	end
 
 	if optionsButton then
-		optionsButton:SetEnabled(not InCombatLockdown())
+		SetIconEnabled(optionsButton, not InCombatLockdown())
 	end
 
 	local ok, model = pcall(selected.Build, selected)
@@ -432,23 +475,17 @@ local function Build()
 	end
 
 	x = x + 8
-	local exportButton = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
-	exportButton:SetText(L["Export"])
-	exportButton:SetSize(exportButton:GetTextWidth() + TAB_PADDING, TAB_HEIGHT)
-	exportButton:SetPoint("TOPLEFT", x, -30)
-	exportButton:SetScript("OnClick", function()
+	local exportButton = IconButton(EXPORT_ICON, L["Export"], nil, function()
 		ns.commands.export("")
 	end)
-	x = x + exportButton:GetWidth() + TAB_GAP
+	exportButton:SetPoint("TOPLEFT", x, -30)
+	x = x + ICON_SIZE + TAB_GAP + 2
 
-	optionsButton = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
-	optionsButton:SetText(L["Options"])
-	optionsButton:SetSize(optionsButton:GetTextWidth() + TAB_PADDING, TAB_HEIGHT)
-	optionsButton:SetPoint("TOPLEFT", x, -30)
-	optionsButton:SetScript("OnClick", function()
+	optionsButton = IconButton(OPTIONS_ICON, L["Options"], L["The options cannot be opened in combat."], function()
 		ns.commands.options("")
 	end)
-	x = x + optionsButton:GetWidth() + TAB_GAP
+	optionsButton:SetPoint("TOPLEFT", x, -30)
+	x = x + ICON_SIZE + TAB_GAP
 
 	tabsWidth = x - TAB_GAP + 12
 end

@@ -33,6 +33,7 @@ read_globals = {
 	"FauxScrollFrame_OnVerticalScroll",
 	"FauxScrollFrame_SetOffset",
 	"FauxScrollFrame_Update",
+	"GameTooltip",
 	"GetAchievementInfo",
 	"GetCategoryNumAchievements",
 	"GetCoinTextureString",
