@@ -563,8 +563,6 @@ local function MigrateDB(version)
 			relativePoint = "CENTER",
 			x = 0,
 			y = 0,
-			width = 620,
-			height = 420,
 		}
 	end
 end

@@ -12,8 +12,6 @@ local SCROLL_WIDTH = 20
 local ICON_SIZE = 26
 local ICON_INSET = 5
 local TOOLBAR_GAP = 12
-local MIN_WINDOW_WIDTH = 420
-local MIN_WINDOW_HEIGHT = 160
 local EXPORT_ICON = "Interface\\Icons\\INV_Scroll_03"
 local OPTIONS_ICON = "Interface\\Icons\\Trade_Engineering"
 local VALID_POINTS = {
@@ -42,7 +40,6 @@ local sinceRefresh = 0
 local moduleViewsRegistered = false
 local sortStates = {}
 local failedViews = {}
-local Refresh
 
 ns.views = {}
 ns.viewList = {}
@@ -118,51 +115,18 @@ local function SaveWindowState()
 	state.relativePoint = VALID_POINTS[relativePoint] and relativePoint or "CENTER"
 	state.x = x or 0
 	state.y = y or 0
-	state.width = window:GetWidth()
-	state.height = window:GetHeight()
+	state.width = nil
+	state.height = nil
 	TallyDB.settings.window = state
 end
 
 local function RestoreWindowState()
 	local state = TallyDB.settings.window or {}
-	local maxWidth = math.max(MIN_WINDOW_WIDTH, UIParent:GetWidth())
-	local maxHeight = math.max(MIN_WINDOW_HEIGHT, UIParent:GetHeight())
-	local width = math.min(maxWidth, math.max(MIN_WINDOW_WIDTH, tonumber(state.width) or 600))
-	local height = math.min(maxHeight, math.max(MIN_WINDOW_HEIGHT, tonumber(state.height) or 300))
 	local point = VALID_POINTS[state.point] and state.point or "CENTER"
 	local relativePoint = VALID_POINTS[state.relativePoint] and state.relativePoint or point
 
-	window:SetSize(width, height)
 	window:ClearAllPoints()
 	window:SetPoint(point, UIParent, relativePoint, tonumber(state.x) or 0, tonumber(state.y) or 0)
-end
-
-local function SetWindowResizeBounds(minWidth)
-	local maxWidth = math.max(minWidth, UIParent:GetWidth())
-	local maxHeight = math.max(MIN_WINDOW_HEIGHT, UIParent:GetHeight())
-	if window.SetResizeBounds then
-		window:SetResizeBounds(minWidth, MIN_WINDOW_HEIGHT, maxWidth, maxHeight)
-	else
-		window:SetMinResize(minWidth, MIN_WINDOW_HEIGHT)
-		window:SetMaxResize(maxWidth, maxHeight)
-	end
-end
-
-local function CreateResizeHandle()
-	local handle = CreateFrame("Button", nil, window)
-	handle:SetSize(16, 16)
-	handle:SetPoint("BOTTOMRIGHT", -5, 5)
-	handle:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
-	handle:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
-	handle:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-	handle:SetScript("OnMouseDown", function()
-		window:StartSizing("BOTTOMRIGHT")
-	end)
-	handle:SetScript("OnMouseUp", function()
-		window:StopMovingOrSizing()
-		Refresh()
-		SaveWindowState()
-	end)
 end
 
 local function HeaderText(entry)
@@ -497,7 +461,7 @@ local function SetSort(column)
 	end
 end
 
-Refresh = function()
+local function Refresh()
 	if not window or not selected then
 		return
 	end
@@ -524,18 +488,6 @@ Refresh = function()
 	currentModel = model
 	tableWidth = LayoutColumns(model)
 
-	local availableHeight = window:GetHeight() - (-TABLE_TOP + HEADER_HEIGHT + MARGIN)
-	local availableRows = math.max(1, math.min(MAX_VISIBLE_ROWS, math.floor(availableHeight / ROW_HEIGHT)))
-	local visibleRows = math.min(math.max(#model.rows, 1), availableRows)
-	local requiredWidth = math.max(
-		tabsWidth,
-		tableWidth + MARGIN * 2 + (#model.rows > visibleRows and SCROLL_WIDTH or 0)
-	)
-	SetWindowResizeBounds(requiredWidth)
-	if window:GetWidth() < requiredWidth or window:GetHeight() < MIN_WINDOW_HEIGHT then
-		window:SetSize(math.max(window:GetWidth(), requiredWidth), math.max(window:GetHeight(), MIN_WINDOW_HEIGHT))
-	end
-
 	headerBackground:ClearAllPoints()
 	headerBackground:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, TABLE_TOP)
 	headerBackground:SetSize(tableWidth, HEADER_HEIGHT)
@@ -559,11 +511,17 @@ Refresh = function()
 		headerButtons[index]:Hide()
 	end
 
+	local visibleRows = math.min(math.max(#model.rows, 1), MAX_VISIBLE_ROWS)
 	scroll:ClearAllPoints()
 	scroll:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, TABLE_TOP - HEADER_HEIGHT)
 	scroll:SetSize(tableWidth + SCROLL_WIDTH, visibleRows * ROW_HEIGHT)
 	FauxScrollFrame_Update(scroll, #model.rows, visibleRows, ROW_HEIGHT)
 	RenderRows()
+
+	window:SetSize(
+		math.max(tabsWidth, tableWidth + MARGIN * 2 + (#model.rows > visibleRows and SCROLL_WIDTH or 0)),
+		-TABLE_TOP + HEADER_HEIGHT + visibleRows * ROW_HEIGHT + MARGIN
+	)
 end
 
 local function Select(view)
@@ -585,7 +543,6 @@ end
 local function Build()
 	EnsureModuleViews()
 	window = ns.CreateWindow("TallyWindow", 600, 300, "Tally")
-	window:SetResizable(true)
 	RestoreWindowState()
 	window:SetScript("OnDragStart", function(self)
 		self:StartMoving()
@@ -595,7 +552,6 @@ local function Build()
 		SaveWindowState()
 	end)
 	window:SetScript("OnHide", SaveWindowState)
-	CreateResizeHandle()
 
 	measure = window:CreateFontString(nil, "OVERLAY")
 	measure:SetPoint("TOPLEFT", window, "BOTTOMLEFT", -1000, -1000)
