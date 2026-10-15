@@ -111,7 +111,9 @@ automatically, so it can be copied right away. The addon compartment next to the
 an entry as well: left-click toggles the window, right-click opens the options.
 
 The options panel ends with a **Links** section. It shows the address of the project page in
-a text box that selects itself on click, so the link can be copied into a browser.
+a text box that selects itself on click, so the link can be copied with `Ctrl+C` and pasted
+into a browser. The game has no API that lets an addon open a browser, so every addon that
+offers a link does it this way; the box is read-only and restores the address after an edit.
 
 > [!NOTE]
 > Builds before 1.0.0 had the shortcuts `/steps` and `/deaths`. They are gone; use

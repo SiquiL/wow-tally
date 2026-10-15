@@ -27,12 +27,28 @@ local function PrepareLinkTemplate()
 		box:SetScript("OnEscapePressed", box.ClearFocus)
 		box:SetScript("OnEnterPressed", box.ClearFocus)
 		box:SetScript("OnEditFocusGained", box.HighlightText)
+		-- A click places the cursor, so the address is selected again afterwards.
+		-- OnMouseUp passes the button name, which HighlightText would read as an index.
+		box:SetScript("OnMouseUp", function(editBox)
+			editBox:HighlightText()
+		end)
 		-- The box exists to be copied, so any edit restores the address
 		box:SetScript("OnTextChanged", function(editBox, userInput)
 			if userInput then
 				editBox:SetText(self.url or "")
 				editBox:HighlightText()
 			end
+		end)
+		box:SetScript("OnEnter", function(editBox)
+			GameTooltip:SetOwner(editBox, "ANCHOR_RIGHT")
+			GameTooltip:SetText(self.data and self.data.name or "")
+			GameTooltip:AddLine(L["Click the address and press Ctrl+C to copy it."], 1, 1, 1, true)
+			-- Addons have no API to launch a browser, so copying is the only way out of the game
+			GameTooltip:AddLine(L["The game cannot open a browser by itself."], 1, 0.82, 0, true)
+			GameTooltip:Show()
+		end)
+		box:SetScript("OnLeave", function()
+			GameTooltip:Hide()
 		end)
 		self.Link = box
 	end
@@ -107,7 +123,7 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 	if CreateSettingsListSectionHeaderInitializer then
 		PrepareLinkTemplate()
 		layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Links"]))
-		AddLink("GitHub", GITHUB_URL, L["Copy the address to open the project page in a browser."])
+		AddLink("GitHub", GITHUB_URL, L["Click the address and press Ctrl+C to copy it."])
 	end
 
 	Settings.RegisterAddOnCategory(category)
