@@ -1,0 +1,9 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<!-- The settings list only accepts registered templates, so the link row needs this stub -->
+	<Frame name="TallySettingsLinkTemplate" inherits="SettingsListElementTemplate" mixin="TallySettingsLinkMixin" virtual="true">
+		<Size x="280" y="26"/>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
+</Ui>

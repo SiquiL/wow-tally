@@ -2,7 +2,109 @@ local _, ns = ...
 local L = ns.L
 
 local category
+local layout
 local registered = {}
+
+local GITHUB_URL = "https://github.com/SiquiL/wow-tally"
+
+-- The settings list builds its rows from a mixin on the template, and that mixin is only
+-- looked up once the panel is opened, so it can be assembled after the client is ready
+local function PrepareLinkTemplate()
+	if TallySettingsLinkMixin or not SettingsListElementMixin then
+		return
+	end
+
+	local mixin = CreateFromMixins(SettingsListElementMixin)
+
+	function mixin:OnLoad()
+		SettingsListElementMixin.OnLoad(self)
+
+		local box = CreateFrame("EditBox", nil, self, "InputBoxTemplate")
+		box:SetSize(300, 22)
+		box:SetPoint("LEFT", self, "CENTER", -175, 0)
+		box:SetAutoFocus(false)
+		box:SetFontObject("GameFontHighlightSmall")
+		box:SetScript("OnEscapePressed", box.ClearFocus)
+		box:SetScript("OnEnterPressed", box.ClearFocus)
+		box:SetScript("OnEditFocusGained", function(editBox)
+			editBox:HighlightText()
+		end)
+		-- A click places the cursor, so the address is selected again afterwards.
+		-- OnMouseUp passes the button name, which HighlightText would read as an index.
+		box:SetScript("OnMouseUp", function(editBox)
+			editBox:HighlightText()
+		end)
+		-- The box exists to be copied, so any edit restores the address
+		box:SetScript("OnTextChanged", function(editBox, userInput)
+			if userInput then
+				editBox:SetText(self.url or "")
+				editBox:HighlightText()
+			end
+		end)
+
+		local function ShowLinkTooltip(owner)
+			GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+			GameTooltip:SetText(self.data and self.data.title or "")
+			GameTooltip:AddLine(L["Click the address and press Ctrl+C to copy it."], 1, 1, 1, true)
+			-- Addons have no API to launch a browser, so copying is the only way out of the game
+			GameTooltip:AddLine(L["The game cannot open a browser by itself."], 1, 0.82, 0, true)
+			GameTooltip:Show()
+		end
+
+		box:SetScript("OnEnter", function(editBox)
+			ShowLinkTooltip(editBox)
+		end)
+		box:SetScript("OnLeave", function()
+			GameTooltip:Hide()
+		end)
+
+		local button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
+		button:SetSize(28, 28)
+		button:SetPoint("RIGHT", box, "LEFT", -8, 0)
+		button:SetFrameLevel(self:GetFrameLevel() + 10)
+		button:EnableMouse(true)
+		button:RegisterForClicks("LeftButtonUp")
+		local selectLink = function()
+			C_Timer.After(0, function()
+				box:SetFocus()
+				box:HighlightText()
+			end)
+		end
+		button:SetScript("OnMouseDown", selectLink)
+		button:SetScript("OnEnter", function(linkButton)
+			ShowLinkTooltip(linkButton)
+		end)
+		button:SetScript("OnLeave", function()
+			GameTooltip:Hide()
+		end)
+
+		local logo = button:CreateTexture(nil, "ARTWORK")
+		logo:SetPoint("TOPLEFT", 5, -5)
+		logo:SetPoint("BOTTOMRIGHT", -5, 5)
+		logo:SetTexture("Interface\\AddOns\\Tally\\Textures\\GitHubMark")
+		self.Link = box
+	end
+
+	function mixin:Init(initializer)
+		SettingsListElementMixin.Init(self, initializer)
+		self.url = self.data.url or ""
+		self.Link:SetText(self.url)
+		self.Link:SetCursorPosition(0)
+	end
+
+	TallySettingsLinkMixin = mixin
+end
+
+local function AddLink(name, url, tooltip)
+	if not (TallySettingsLinkMixin and Settings.CreateElementInitializer) then
+		return
+	end
+
+	local initializer = Settings.CreateElementInitializer("TallySettingsLinkTemplate",
+		{ name = "", title = name, url = url, tooltip = tooltip })
+	initializer:AddSearchTags(name)
+	layout:AddInitializer(initializer)
+end
 
 -- Goes through the registered setting so an open options panel reflects the change
 function ns.SetSetting(key, value)
@@ -28,11 +130,34 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 		return
 	end
 
-	category = Settings.RegisterVerticalLayoutCategory("Tally")
+	category, layout = Settings.RegisterVerticalLayoutCategory("Tally")
 	local milestones = Settings.RegisterAddOnSetting(category, "Tally_Milestones", "milestones",
 		TallyDB.settings, "boolean", L["Announce milestones"], true)
 	Settings.CreateCheckbox(category, milestones, L["Print a chat message when a counter reaches a milestone."])
 	registered.milestones = milestones
+
+	local hideEmpty = Settings.RegisterAddOnSetting(category, "Tally_HideEmpty", "hideEmpty",
+		TallyDB.settings, "boolean", L["Hide empty columns"], true)
+	Settings.CreateCheckbox(category, hideEmpty, L["Hide table columns that contain no recorded values."])
+	registered.hideEmpty = hideEmpty
+
+	if CreateSettingsButtonInitializer then
+		local resetLabel = L["Reset window position"]
+		layout:AddInitializer(CreateSettingsButtonInitializer(
+			resetLabel,
+			resetLabel,
+			ns.ResetWindowPosition,
+			L["Move the Tally window back to the center of the screen."],
+			true
+		))
+	end
+
+	if CreateSettingsListSectionHeaderInitializer then
+		PrepareLinkTemplate()
+		layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Links"]))
+		AddLink("GitHub", GITHUB_URL, L["Click the address and press Ctrl+C to copy it."])
+	end
+
 	Settings.RegisterAddOnCategory(category)
 end
 
