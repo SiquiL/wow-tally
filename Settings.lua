@@ -2,6 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 local category
+local layout
 local registered = {}
 
 -- Goes through the registered setting so an open options panel reflects the change
@@ -28,7 +29,7 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 		return
 	end
 
-	category = Settings.RegisterVerticalLayoutCategory("Tally")
+	category, layout = Settings.RegisterVerticalLayoutCategory("Tally")
 	local milestones = Settings.RegisterAddOnSetting(category, "Tally_Milestones", "milestones",
 		TallyDB.settings, "boolean", L["Announce milestones"], true)
 	Settings.CreateCheckbox(category, milestones, L["Print a chat message when a counter reaches a milestone."])
@@ -38,6 +39,14 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 		TallyDB.settings, "boolean", L["Hide empty columns"], true)
 	Settings.CreateCheckbox(category, hideEmpty, L["Hide table columns that contain no recorded values."])
 	registered.hideEmpty = hideEmpty
+
+	if Settings.CreateButton then
+		layout:AddInitializer(Settings.CreateButton(
+			L["Reset window position"],
+			L["Move the Tally window back to the center of the screen."],
+			ns.ResetWindowPosition
+		))
+	end
 	Settings.RegisterAddOnCategory(category)
 end
 

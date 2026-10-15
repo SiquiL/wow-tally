@@ -136,6 +136,23 @@ local function RestoreWindowState()
 	window:SetPoint(point, UIParent, relativePoint, tonumber(state.x) or 0, tonumber(state.y) or 0)
 end
 
+function ns.ResetWindowPosition()
+	local state = TallyDB.settings.window or {}
+	state.point = "CENTER"
+	state.relativePoint = "CENTER"
+	state.x = 0
+	state.y = 0
+	state.width = nil
+	state.height = nil
+	TallyDB.settings.window = state
+
+	if window then
+		window:ClearAllPoints()
+		window:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	end
+	ns.Say(L["The window position has been reset."])
+end
+
 local function HeaderText(entry)
 	if entry.headerUnit then
 		return ("%s (%s)"):format(entry.label, entry.headerUnit)
