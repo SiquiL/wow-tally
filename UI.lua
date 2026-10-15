@@ -186,7 +186,7 @@ local function SortLabel(column)
 	if not state or state.key ~= column.key then
 		return column.label
 	end
-	return column.label .. (state.direction == "asc" and " ▲" or " ▼")
+	return column.label .. (state.direction == "asc" and " ^" or " v")
 end
 
 local function Measure(font, text)
