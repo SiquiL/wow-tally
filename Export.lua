@@ -6,6 +6,7 @@ local scroll
 local edit
 local formatButtons = {}
 local SetFormat
+local selectedFormat = "csv"
 
 local function Number(value)
 	if value == math.floor(value) then
@@ -123,6 +124,7 @@ local function Build()
 end
 
 SetFormat = function(format)
+	selectedFormat = format
 	for key, button in pairs(formatButtons) do
 		button:SetEnabled(key ~= format)
 	end
@@ -132,6 +134,12 @@ SetFormat = function(format)
 	edit:SetText(window.text)
 	edit:HighlightText()
 	edit:SetFocus()
+end
+
+function ns.RefreshExport()
+	if window and window:IsShown() then
+		SetFormat(selectedFormat)
+	end
 end
 
 ns.RegisterCommand("export", function(rest)

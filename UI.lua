@@ -4,6 +4,8 @@ local L = ns.L
 local ROW_HEIGHT = 18
 local HEADER_HEIGHT = 20
 local MAX_VISIBLE_ROWS = 15
+local FILTER_ROW_HEIGHT = 24
+local MAX_FILTER_ROWS = 12
 local TAB_HEIGHT, TAB_PADDING, TAB_GAP = 22, 24, 2
 local TABLE_TOP = -(32 + TAB_HEIGHT + 8)
 local MARGIN = 14
@@ -12,6 +14,7 @@ local SCROLL_WIDTH = 20
 local ICON_SIZE = 26
 local ICON_INSET = 5
 local TOOLBAR_GAP = 12
+local FILTER_ICON = "Interface\\Icons\\INV_Misc_GroupNeedMore"
 local EXPORT_ICON = "Interface\\Icons\\INV_Scroll_03"
 local OPTIONS_ICON = "Interface\\Icons\\Trade_Engineering"
 local VALID_POINTS = {
@@ -32,6 +35,10 @@ local measure
 local headerBackground
 local selected
 local optionsButton
+local filterWindow
+local filterScroll
+local filterRows = {}
+local filterCharacters = {}
 local tabs = {}
 local tabsWidth = 0
 local headerButtons = {}
@@ -540,6 +547,169 @@ local function Select(view)
 	Refresh()
 end
 
+local RefreshCharacterFilter
+
+local function RenderCharacterFilter()
+	local offset = FauxScrollFrame_GetOffset(filterScroll)
+	for slot = 1, MAX_FILTER_ROWS do
+		local row = filterRows[slot]
+		local character = filterCharacters[offset + slot]
+		if character then
+			row.key = character.key
+			row.label:SetText(ns.CharLabel(character.key, character.data))
+			row.checkbox:SetChecked(ns.IsCharacterVisible(character.key))
+			row.checkbox:SetEnabled(character.key ~= ns.charKey)
+			row.remove:SetEnabled(character.key ~= ns.charKey)
+			row:Show()
+		else
+			row:Hide()
+		end
+	end
+end
+
+local function CharacterFilterRow(slot)
+	local row = CreateFrame("Frame", nil, filterWindow)
+	row:SetSize(340, FILTER_ROW_HEIGHT)
+	row:SetPoint("TOPLEFT", 14, -62 - (slot - 1) * FILTER_ROW_HEIGHT)
+
+	row.checkbox = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
+	row.checkbox:SetSize(290, FILTER_ROW_HEIGHT)
+	row.checkbox:SetPoint("LEFT")
+	row.checkbox:SetScript("OnClick", function(self)
+		if row.key == ns.charKey then
+			self:SetChecked(true)
+			return
+		end
+		TallyDB.settings.hidden[row.key] = self:GetChecked() and nil or true
+		Refresh()
+	end)
+	row.checkbox:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(
+			row.key == ns.charKey
+				and L["The active character is always included."]
+				or L["Include this character in totals, reports and exports."]
+		)
+		GameTooltip:Show()
+	end)
+	row.checkbox:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+
+	row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	row.label:SetPoint("LEFT", row.checkbox, "LEFT", 26, 0)
+	row.label:SetPoint("RIGHT", row.checkbox, "RIGHT", -4, 0)
+	row.label:SetJustifyH("LEFT")
+	row.label:SetWordWrap(false)
+
+	row.remove = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+	row.remove:SetSize(24, 20)
+	row.remove:SetPoint("RIGHT")
+	row.remove:SetText("X")
+	row.remove:SetScript("OnClick", function()
+		ns.RemoveCharacter(row.key, function()
+			RefreshCharacterFilter()
+			Refresh()
+			if ns.RefreshExport then
+				ns.RefreshExport()
+			end
+		end)
+	end)
+	row.remove:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(
+			row.key == ns.charKey and L["The active character cannot be removed."] or L["Remove character"]
+		)
+		GameTooltip:Show()
+	end)
+	row.remove:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+
+	filterRows[slot] = row
+end
+
+RefreshCharacterFilter = function()
+	filterCharacters = {}
+	ns.ForEachStoredChar(function(key, data)
+		filterCharacters[#filterCharacters + 1] = { key = key, data = data }
+	end)
+
+	local visibleRows = math.min(math.max(#filterCharacters, 1), MAX_FILTER_ROWS)
+	local maxOffset = math.max(0, #filterCharacters - visibleRows)
+	if FauxScrollFrame_GetOffset(filterScroll) > maxOffset then
+		FauxScrollFrame_SetOffset(filterScroll, maxOffset)
+	end
+	filterWindow:SetSize(390, 62 + visibleRows * FILTER_ROW_HEIGHT + MARGIN)
+	filterScroll:SetSize(360, visibleRows * FILTER_ROW_HEIGHT)
+	FauxScrollFrame_Update(filterScroll, #filterCharacters, visibleRows, FILTER_ROW_HEIGHT)
+	RenderCharacterFilter()
+end
+
+local function SetCharacterFilter(mode)
+	if mode == "all" then
+		TallyDB.settings.hidden = {}
+	else
+		ns.ForEachStoredChar(function(key)
+			TallyDB.settings.hidden[key] = key ~= ns.charKey and true or nil
+		end)
+	end
+	RefreshCharacterFilter()
+	Refresh()
+	if ns.RefreshExport then
+		ns.RefreshExport()
+	end
+end
+
+local function BuildCharacterFilter()
+	filterWindow = ns.CreateWindow("TallyCharacterFilterWindow", 390, 200, L["Character filter"])
+
+	local x = 14
+	for _, action in ipairs({
+		{ label = L["All"], mode = "all" },
+		{ label = L["None"], mode = "none" },
+		{ label = L["Only current"], mode = "current" },
+	}) do
+		local current = action
+		local button = CreateFrame("Button", nil, filterWindow, "UIPanelButtonTemplate")
+		button:SetText(current.label)
+		button:SetSize(button:GetTextWidth() + TAB_PADDING, TAB_HEIGHT)
+		button:SetPoint("TOPLEFT", x, -30)
+		button:SetScript("OnClick", function()
+			SetCharacterFilter(current.mode)
+		end)
+		x = x + button:GetWidth() + TAB_GAP
+	end
+
+	filterScroll = CreateFrame("ScrollFrame", "TallyCharacterFilterScrollFrame", filterWindow, "FauxScrollFrameTemplate")
+	filterScroll:SetPoint("TOPLEFT", 14, -62)
+	filterScroll:SetScript("OnVerticalScroll", function(self, offset)
+		FauxScrollFrame_OnVerticalScroll(self, offset, FILTER_ROW_HEIGHT, RenderCharacterFilter)
+	end)
+
+	for slot = 1, MAX_FILTER_ROWS do
+		CharacterFilterRow(slot)
+	end
+	filterWindow:SetScript("OnShow", RefreshCharacterFilter)
+end
+
+local function ToggleCharacterFilter()
+	if not filterWindow then
+		local ok, err = pcall(BuildCharacterFilter)
+		if not ok then
+			filterWindow = nil
+			ns.Say(L["The character filter could not be created – %s"]:format(tostring(err)))
+			return
+		end
+	end
+
+	if filterWindow:IsShown() then
+		filterWindow:Hide()
+	else
+		filterWindow:Show()
+	end
+end
+
 local function Build()
 	EnsureModuleViews()
 	window = ns.CreateWindow("TallyWindow", 600, 300, "Tally")
@@ -551,7 +721,12 @@ local function Build()
 		self:StopMovingOrSizing()
 		SaveWindowState()
 	end)
-	window:SetScript("OnHide", SaveWindowState)
+	window:SetScript("OnHide", function()
+		SaveWindowState()
+		if filterWindow then
+			filterWindow:Hide()
+		end
+	end)
 
 	measure = window:CreateFontString(nil, "OVERLAY")
 	measure:SetPoint("TOPLEFT", window, "BOTTOMLEFT", -1000, -1000)
@@ -592,13 +767,16 @@ local function Build()
 		ns.commands.export("")
 	end)
 
+	local filterButton = IconButton(FILTER_ICON, L["Character filter"], nil, ToggleCharacterFilter)
+
 	optionsButton = IconButton(OPTIONS_ICON, L["Options"], L["The options cannot be opened in combat."], function()
 		ns.commands.options("")
 	end)
 	optionsButton:SetPoint("TOPRIGHT", window, "TOPRIGHT", -MARGIN, -28)
 	exportButton:SetPoint("RIGHT", optionsButton, "LEFT", -TAB_GAP, 0)
+	filterButton:SetPoint("RIGHT", exportButton, "LEFT", -TAB_GAP, 0)
 
-	tabsWidth = x + TOOLBAR_GAP + ICON_SIZE * 2 + TAB_GAP + MARGIN
+	tabsWidth = x + TOOLBAR_GAP + ICON_SIZE * 3 + TAB_GAP * 2 + MARGIN
 	selected = ns.views[TallyDB.settings.view] or ns.viewList[1]
 end
 

@@ -65,7 +65,7 @@ function ns.CopyTable(value)
 	return copy
 end
 
-function ns.ForEachChar(fn)
+function ns.ForEachStoredChar(fn)
 	local keys = {}
 	for key in pairs(TallyDB.chars) do
 		keys[#keys + 1] = key
@@ -74,6 +74,18 @@ function ns.ForEachChar(fn)
 	for _, key in ipairs(keys) do
 		fn(key, TallyDB.chars[key])
 	end
+end
+
+function ns.IsCharacterVisible(key)
+	return key == ns.charKey or not TallyDB.settings.hidden[key]
+end
+
+function ns.ForEachChar(fn)
+	ns.ForEachStoredChar(function(key, data)
+		if ns.IsCharacterVisible(key) then
+			fn(key, data)
+		end
+	end)
 end
 
 function ns.CharLabel(key, data)
@@ -270,13 +282,13 @@ end
 
 local function PrintChars()
 	ns.Say(L["Stored characters"])
-	ns.ForEachChar(function(key, data)
+	ns.ForEachStoredChar(function(key, data)
 		local seen = data.lastSeen and date("%Y-%m-%d %H:%M", data.lastSeen) or L["never"]
 		print("  " .. L["%s – %s, last logout %s"]:format(ns.CharLabel(key, data), data.race or "?", seen))
 	end)
 end
 
-local function RemoveCharacter(name)
+function ns.RemoveCharacter(name, onRemoved)
 	if name == "" then
 		ns.Say(L["Usage: /tally remove <Name-Realm>"])
 		return
@@ -284,7 +296,7 @@ local function RemoveCharacter(name)
 
 	local found
 	for key in pairs(TallyDB.chars) do
-		if key:lower() == name then
+		if key:lower() == name:lower() then
 			found = key
 			break
 		end
@@ -297,7 +309,11 @@ local function RemoveCharacter(name)
 	else
 		ns.Confirm(L["Remove all Tally data of %s?"]:format(found), function()
 			TallyDB.chars[found] = nil
+			TallyDB.settings.hidden[found] = nil
 			ns.Say(L["%s has been removed."]:format(found))
+			if onRemoved then
+				onRemoved(found)
+			end
 		end)
 	end
 end
@@ -390,7 +406,7 @@ end
 local function ResetModule(module, all)
 	if all then
 		ns.Confirm(L["Reset %s for every stored character?"]:format(module.label), function()
-			ns.ForEachChar(function(_, data)
+			ns.ForEachStoredChar(function(_, data)
 				if data[module.key] then
 					ResetSection(module, data[module.key])
 					ClearMilestones(module, data)
@@ -461,7 +477,7 @@ end
 ns.RegisterCommand("help", PrintHelp, L["/tally help – list all commands"])
 ns.RegisterCommand("all", ReportAll, L["/tally all – every character, per module"])
 ns.RegisterCommand("chars", PrintChars, L["/tally chars – list stored characters"])
-ns.RegisterCommand("remove", RemoveCharacter, L["/tally remove <Name-Realm> – delete a stored character"])
+ns.RegisterCommand("remove", ns.RemoveCharacter, L["/tally remove <Name-Realm> – delete a stored character"])
 ns.RegisterCommand("debug", function(rest)
 	PrintDebug(rest ~= "" and rest or nil)
 end, L["/tally debug [module] – show stored state"])
@@ -571,6 +587,7 @@ local function InitDB()
 	TallyDB = TallyDB or {}
 	TallyDB.chars = TallyDB.chars or {}
 	TallyDB.settings = TallyDB.settings or {}
+	TallyDB.settings.hidden = TallyDB.settings.hidden or {}
 
 	if TallyDB.settings.milestones == nil then
 		TallyDB.settings.milestones = true
@@ -628,6 +645,7 @@ local function InitCharacter()
 	end
 
 	TallyDB.chars[key] = data
+	TallyDB.settings.hidden[key] = nil
 	ns.charKey = key
 	ns.char = data
 	return fresh
