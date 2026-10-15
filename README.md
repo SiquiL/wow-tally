@@ -110,8 +110,8 @@ options. Filter and export windows dock beside the main window. The export text 
 automatically, so it can be copied right away. The addon compartment next to the minimap has
 an entry as well: left-click toggles the window, right-click opens the options.
 
-The options panel ends with a **Links** section. It shows the GitHub mark and the address of
-the project page in a text box that selects itself on click, so the link can be copied with
+The options panel ends with a **Links** section. It shows a GitHub button and the address of
+the project page. Clicking either one selects the address, so the link can be copied with
 `Ctrl+C` and pasted into a browser. The game has no API that lets an addon open a browser, so
 every addon that offers a link does it this way; the box is read-only and restores the address
 after an edit.

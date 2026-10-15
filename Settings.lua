@@ -41,20 +41,40 @@ local function PrepareLinkTemplate()
 				editBox:HighlightText()
 			end
 		end)
-		box:SetScript("OnEnter", function(editBox)
-			GameTooltip:SetOwner(editBox, "ANCHOR_RIGHT")
-			GameTooltip:SetText(self.data and self.data.name or "")
+
+		local function ShowLinkTooltip(owner)
+			GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+			GameTooltip:SetText(self.data and self.data.title or "")
 			GameTooltip:AddLine(L["Click the address and press Ctrl+C to copy it."], 1, 1, 1, true)
 			-- Addons have no API to launch a browser, so copying is the only way out of the game
 			GameTooltip:AddLine(L["The game cannot open a browser by itself."], 1, 0.82, 0, true)
 			GameTooltip:Show()
+		end
+
+		box:SetScript("OnEnter", function(editBox)
+			ShowLinkTooltip(editBox)
 		end)
 		box:SetScript("OnLeave", function()
 			GameTooltip:Hide()
 		end)
-		local logo = self:CreateTexture(nil, "ARTWORK")
-		logo:SetSize(18, 18)
-		logo:SetPoint("RIGHT", self, "LEFT", -6, 0)
+
+		local button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
+		button:SetSize(28, 28)
+		button:SetPoint("RIGHT", box, "LEFT", -8, 0)
+		button:SetScript("OnClick", function()
+			box:SetFocus()
+			box:HighlightText()
+		end)
+		button:SetScript("OnEnter", function(linkButton)
+			ShowLinkTooltip(linkButton)
+		end)
+		button:SetScript("OnLeave", function()
+			GameTooltip:Hide()
+		end)
+
+		local logo = button:CreateTexture(nil, "ARTWORK")
+		logo:SetPoint("TOPLEFT", 5, -5)
+		logo:SetPoint("BOTTOMRIGHT", -5, 5)
 		logo:SetTexture("Interface\\AddOns\\Tally\\Textures\\GitHubMark")
 		self.Link = box
 	end
@@ -75,7 +95,7 @@ local function AddLink(name, url, tooltip)
 	end
 
 	local initializer = Settings.CreateElementInitializer("TallySettingsLinkTemplate",
-		{ name = name, url = url, tooltip = tooltip })
+		{ name = "", title = name, url = url, tooltip = tooltip })
 	initializer:AddSearchTags(name)
 	layout:AddInitializer(initializer)
 end
