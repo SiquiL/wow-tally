@@ -2,17 +2,36 @@ local _, ns = ...
 local L = ns.L
 
 local ROW_HEIGHT = 18
+local HEADER_HEIGHT = 20
+local MAX_VISIBLE_ROWS = 15
 local TAB_HEIGHT, TAB_PADDING, TAB_GAP = 22, 24, 2
 local TABLE_TOP = -(32 + TAB_HEIGHT + 8)
 local MARGIN = 14
 local COLUMN_GAP = 16
+local SCROLL_WIDTH = 20
 
 local window
+local scroll
+local measure
 local selected
 local tabs = {}
 local tabsWidth = 0
-local strings = {}
+local headerButtons = {}
+local rowFrames = {}
 local sinceRefresh = 0
+local moduleViewsRegistered = false
+local sortStates = {}
+local failedViews = {}
+
+ns.views = {}
+ns.viewList = {}
+
+function ns.RegisterView(key, view)
+	assert(not ns.views[key], "Tally: duplicate view " .. key)
+	view.key = key
+	ns.views[key] = view
+	ns.viewList[#ns.viewList + 1] = view
+end
 
 function ns.CreateWindow(name, width, height, title)
 	local created = CreateFrame("Frame", name, UIParent, "BasicFrameTemplateWithInset")
@@ -35,28 +54,6 @@ function ns.CreateWindow(name, width, height, title)
 	return created
 end
 
--- Strings get no fixed width, so a long text widens its column instead of being cut off
-local function Text(index, font)
-	local fs = strings[index]
-	if not fs then
-		fs = window:CreateFontString(nil, "OVERLAY")
-		fs:SetWordWrap(false)
-		strings[index] = fs
-	end
-	-- A pooled string changes role when the tab changes, so the font is set every time
-	fs:SetFontObject(font or "GameFontHighlightSmall")
-	fs:ClearAllPoints()
-	fs:Show()
-	return fs
-end
-
-local function CellText(entry)
-	if not entry then
-		return "–"
-	end
-	return ns.FormatCell(entry)
-end
-
 local function HeaderText(entry)
 	if entry.headerUnit then
 		return ("%s (%s)"):format(entry.label, entry.headerUnit)
@@ -64,96 +61,325 @@ local function HeaderText(entry)
 	return entry.label
 end
 
+local function EntryCell(entry)
+	if not entry then
+		return { text = "–" }
+	end
+	return { text = ns.FormatCell(entry), sort = entry.value }
+end
+
+local function EntryCells(entries, columns)
+	local byKey = {}
+	for _, entry in ipairs(entries or {}) do
+		byKey[entry.key] = entry
+	end
+
+	local cells = {}
+	for index = 2, #columns do
+		cells[index] = EntryCell(byKey[columns[index].key])
+	end
+	return cells
+end
+
+local function BuildModuleTable(module)
+	local totals = ns.AccountEntries(module)
+	local columns = {
+		{ key = "character", label = L["Character"], align = "LEFT", sortType = "text" },
+	}
+
+	for _, entry in ipairs(totals) do
+		if ns.IsVisible(entry) then
+			columns[#columns + 1] = {
+				key = entry.key,
+				label = HeaderText(entry),
+				align = "RIGHT",
+				sortType = "number",
+			}
+		end
+	end
+
+	local rows = {}
+	ns.ForEachChar(function(key, data)
+		local entries = ns.GetEntries(module, data)
+		if entries then
+			local cells = EntryCells(entries, columns)
+			cells[1] = { text = ns.CharLabel(key, data), sort = key:lower() }
+			rows[#rows + 1] = { key = key, cells = cells }
+		end
+	end)
+
+	local cells = EntryCells(totals, columns)
+	cells[1] = { text = L["Account total"], sort = "" }
+	rows[#rows + 1] = { key = "ACCOUNT", role = "total", cells = cells }
+
+	return { columns = columns, rows = rows }
+end
+
+local function EnsureModuleViews()
+	if moduleViewsRegistered then
+		return
+	end
+	moduleViewsRegistered = true
+
+	for _, module in ipairs(ns.moduleList) do
+		local current = module
+		ns.RegisterView(current.key, {
+			label = current.label,
+			Build = function()
+				return BuildModuleTable(current)
+			end,
+		})
+	end
+end
+
+local function SortRows(model)
+	local state = sortStates[selected.key]
+	if not state then
+		state = { key = model.columns[1].key, direction = "asc" }
+		sortStates[selected.key] = state
+	end
+
+	local columnIndex
+	for index, column in ipairs(model.columns) do
+		if column.key == state.key then
+			columnIndex = index
+			break
+		end
+	end
+	if not columnIndex then
+		columnIndex = 1
+		state.key, state.direction = model.columns[1].key, "asc"
+	end
+
+	local sortable, fixed = {}, {}
+	for _, row in ipairs(model.rows) do
+		if row.role == "total" then
+			fixed[#fixed + 1] = row
+		else
+			sortable[#sortable + 1] = row
+		end
+	end
+
+	table.sort(sortable, function(left, right)
+		local leftValue = left.cells[columnIndex] and left.cells[columnIndex].sort
+		local rightValue = right.cells[columnIndex] and right.cells[columnIndex].sort
+		if leftValue == rightValue then
+			return left.key < right.key
+		elseif leftValue == nil then
+			return false
+		elseif rightValue == nil then
+			return true
+		elseif state.direction == "desc" then
+			return leftValue > rightValue
+		end
+		return leftValue < rightValue
+	end)
+
+	model.rows = sortable
+	for _, row in ipairs(fixed) do
+		model.rows[#model.rows + 1] = row
+	end
+end
+
+local function SortLabel(column)
+	local state = sortStates[selected.key]
+	if not state or state.key ~= column.key then
+		return column.label
+	end
+	return column.label .. (state.direction == "asc" and " ▲" or " ▼")
+end
+
+local function Measure(font, text)
+	measure:SetFontObject(font)
+	measure:SetText(text or "")
+	return measure:GetStringWidth()
+end
+
+local function LayoutColumns(model)
+	local left = 0
+	for index, column in ipairs(model.columns) do
+		column.width = math.max(Measure("GameFontNormalSmall", SortLabel(column)), index == 1 and 80 or 32)
+		for _, row in ipairs(model.rows) do
+			local cell = row.cells[index]
+			local font = row.role == "total" and "GameFontNormalSmall" or "GameFontHighlightSmall"
+			column.width = math.max(column.width, Measure(font, cell and cell.text or "–"))
+		end
+		column.left = left
+		left = left + column.width + COLUMN_GAP
+	end
+	return left - COLUMN_GAP
+end
+
+local function HeaderButton(index)
+	local button = headerButtons[index]
+	if button then
+		return button
+	end
+
+	button = CreateFrame("Button", nil, window)
+	button:SetHeight(HEADER_HEIGHT)
+	local label = button:CreateFontString(nil, "OVERLAY")
+	button:SetFontString(label)
+	button:SetNormalFontObject("GameFontNormalSmall")
+	button:SetHighlightFontObject("GameFontHighlightSmall")
+	label:SetWordWrap(false)
+	headerButtons[index] = button
+	return button
+end
+
+local function RowFrame(index)
+	local frame = rowFrames[index]
+	if frame then
+		return frame
+	end
+
+	frame = CreateFrame("Frame", nil, window)
+	frame.cells = {}
+	rowFrames[index] = frame
+	return frame
+end
+
+local function RowCell(frame, index)
+	local cell = frame.cells[index]
+	if not cell then
+		cell = frame:CreateFontString(nil, "OVERLAY")
+		cell:SetWordWrap(false)
+		frame.cells[index] = cell
+	end
+	return cell
+end
+
+local currentModel
+local tableWidth = 0
+
+local function RenderRows()
+	if not currentModel then
+		return
+	end
+
+	local offset = FauxScrollFrame_GetOffset(scroll)
+	for slot = 1, MAX_VISIBLE_ROWS do
+		local frame = RowFrame(slot)
+		local row = currentModel.rows[offset + slot]
+		if row then
+			frame:ClearAllPoints()
+			frame:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, TABLE_TOP - HEADER_HEIGHT - (slot - 1) * ROW_HEIGHT)
+			frame:SetSize(tableWidth, ROW_HEIGHT)
+			frame:Show()
+
+			for index, column in ipairs(currentModel.columns) do
+				local cell = RowCell(frame, index)
+				cell:SetFontObject(row.role == "total" and "GameFontNormalSmall" or "GameFontHighlightSmall")
+				cell:ClearAllPoints()
+				cell:SetPoint("TOPLEFT", frame, "TOPLEFT", column.left, 0)
+				cell:SetSize(column.width, ROW_HEIGHT)
+				cell:SetJustifyH(column.align)
+				cell:SetText(row.cells[index] and row.cells[index].text or "–")
+				cell:Show()
+			end
+			for index = #currentModel.columns + 1, #frame.cells do
+				frame.cells[index]:Hide()
+			end
+		else
+			frame:Hide()
+		end
+	end
+end
+
+local function SetSort(column)
+	local state = sortStates[selected.key]
+	if state and state.key == column.key then
+		state.direction = state.direction == "asc" and "desc" or "asc"
+	else
+		sortStates[selected.key] = {
+			key = column.key,
+			direction = column.sortType == "number" and "desc" or "asc",
+		}
+	end
+end
+
 local function Refresh()
 	if not window or not selected then
 		return
 	end
 
-	for _, fs in ipairs(strings) do
-		fs:Hide()
-	end
-
-	local totals = ns.AccountEntries(selected)
-	local columns = {}
-	for _, entry in ipairs(totals) do
-		if ns.IsVisible(entry) then
-			columns[#columns + 1] = { key = entry.key, label = HeaderText(entry), width = 0 }
+	local ok, model = pcall(selected.Build, selected)
+	if not ok then
+		if not failedViews[selected.key] then
+			failedViews[selected.key] = true
+			ns.Say(("|cffff5555%s|r – %s"):format(
+				L["%s.%s failed"]:format(selected.label, "Build"),
+				tostring(model)
+			))
 		end
+		return
+	end
+	if not model or not model.columns or not model.rows then
+		return
+	end
+	SortRows(model)
+	currentModel = model
+	tableWidth = LayoutColumns(model)
+
+	for index, column in ipairs(model.columns) do
+		local current = column
+		local button = HeaderButton(index)
+		button:ClearAllPoints()
+		button:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN + current.left, TABLE_TOP)
+		button:SetSize(current.width, HEADER_HEIGHT)
+		button:GetFontString():SetJustifyH(current.align)
+		button:SetText(SortLabel(current))
+		button:SetScript("OnClick", function()
+			SetSort(current)
+			Refresh()
+		end)
+		button:Show()
+	end
+	for index = #model.columns + 1, #headerButtons do
+		headerButtons[index]:Hide()
 	end
 
-	local used, nameWidth, rows = 0, 0, {}
+	local visibleRows = math.min(math.max(#model.rows, 1), MAX_VISIBLE_ROWS)
+	scroll:ClearAllPoints()
+	scroll:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, TABLE_TOP - HEADER_HEIGHT)
+	scroll:SetSize(tableWidth + SCROLL_WIDTH, visibleRows * ROW_HEIGHT)
+	FauxScrollFrame_Update(scroll, #model.rows, visibleRows, ROW_HEIGHT)
+	RenderRows()
 
-	-- Rows are filled first and placed once every column knows its widest text
-	local function Row(name, cells, nameFont, cellFont)
-		used = used + 1
-		local row = { name = Text(used, nameFont), cells = {} }
-		row.name:SetText(name)
-		nameWidth = math.max(nameWidth, row.name:GetStringWidth())
-		for index, column in ipairs(columns) do
-			used = used + 1
-			local cell = Text(used, cellFont)
-			cell:SetText(cells[index])
-			column.width = math.max(column.width, cell:GetStringWidth())
-			row.cells[index] = cell
-		end
-		rows[#rows + 1] = row
-	end
-
-	local function EntryCells(entries)
-		local byKey = {}
-		for _, entry in ipairs(entries) do
-			byKey[entry.key] = entry
-		end
-		local cells = {}
-		for index, column in ipairs(columns) do
-			cells[index] = CellText(byKey[column.key])
-		end
-		return cells
-	end
-
-	local headers = {}
-	for index, column in ipairs(columns) do
-		headers[index] = column.label
-	end
-	Row(L["Character"], headers, "GameFontNormalSmall", "GameFontNormalSmall")
-	ns.ForEachChar(function(key, data)
-		local entries = ns.GetEntries(selected, data)
-		if entries then
-			Row(ns.CharLabel(key, data), EntryCells(entries))
-		end
-	end)
-	Row(L["Account total"], EntryCells(totals), "GameFontNormalSmall")
-
-	local right = MARGIN + nameWidth
-	for _, column in ipairs(columns) do
-		right = right + COLUMN_GAP + column.width
-		column.right = right
-	end
-	for index, row in ipairs(rows) do
-		local y = TABLE_TOP - (index - 1) * ROW_HEIGHT
-		row.name:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, y)
-		for columnIndex, cell in ipairs(row.cells) do
-			cell:SetPoint("TOPRIGHT", window, "TOPLEFT", columns[columnIndex].right, y)
-		end
-	end
-
-	window:SetSize(math.max(tabsWidth, right + MARGIN), -TABLE_TOP + #rows * ROW_HEIGHT + 14)
+	window:SetSize(
+		math.max(tabsWidth, tableWidth + MARGIN * 2 + (#model.rows > visibleRows and SCROLL_WIDTH or 0)),
+		-TABLE_TOP + HEADER_HEIGHT + visibleRows * ROW_HEIGHT + MARGIN
+	)
 end
 
-local function Select(module)
-	selected = module
+local function Select(view)
+	selected = view
 	for index, tab in ipairs(tabs) do
-		if ns.moduleList[index] == module then
+		if ns.viewList[index] == view then
 			tab:Disable()
 		else
 			tab:Enable()
 		end
 	end
+	if scroll then
+		FauxScrollFrame_SetOffset(scroll, 0)
+	end
 	Refresh()
 end
 
 local function Build()
+	EnsureModuleViews()
 	window = ns.CreateWindow("TallyWindow", 600, 300, "Tally")
+
+	measure = window:CreateFontString(nil, "OVERLAY")
+	measure:SetPoint("TOPLEFT", window, "BOTTOMLEFT", -1000, -1000)
+	measure:SetAlpha(0)
+
+	scroll = CreateFrame("ScrollFrame", "TallyTableScrollFrame", window, "FauxScrollFrameTemplate")
+	scroll:SetScript("OnVerticalScroll", function(self, offset)
+		FauxScrollFrame_OnVerticalScroll(self, offset, ROW_HEIGHT, RenderRows)
+	end)
+
 	window:SetScript("OnShow", Refresh)
 	window:SetScript("OnUpdate", function(_, elapsed)
 		sinceRefresh = sinceRefresh + elapsed
@@ -164,13 +390,14 @@ local function Build()
 	end)
 
 	local x = 12
-	for index, module in ipairs(ns.moduleList) do
+	for index, view in ipairs(ns.viewList) do
+		local current = view
 		local tab = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
-		tab:SetText(module.label)
+		tab:SetText(current.label)
 		tab:SetSize(tab:GetTextWidth() + TAB_PADDING, TAB_HEIGHT)
 		tab:SetPoint("TOPLEFT", x, -30)
 		tab:SetScript("OnClick", function()
-			Select(module)
+			Select(current)
 		end)
 		x = x + tab:GetWidth() + TAB_GAP
 		tabs[index] = tab
@@ -179,8 +406,9 @@ local function Build()
 end
 
 ns.RegisterCommand("window", function(rest)
-	local module = ns.modules[rest]
-	if rest ~= "" and not module then
+	EnsureModuleViews()
+	local view = ns.views[rest]
+	if rest ~= "" and not view then
 		ns.UnknownModule(rest)
 		return
 	end
@@ -194,13 +422,13 @@ ns.RegisterCommand("window", function(rest)
 		end
 	end
 
-	if module then
-		Select(module)
+	if view then
+		Select(view)
 		window:Show()
 	elseif window:IsShown() then
 		window:Hide()
 	else
-		Select(selected or ns.moduleList[1])
+		Select(selected or ns.viewList[1])
 		window:Show()
 	end
 end, L["/tally window [module] – table of every character"])
