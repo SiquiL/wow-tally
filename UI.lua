@@ -573,7 +573,7 @@ local function CharacterFilterRow(slot)
 	row:SetPoint("TOPLEFT", 14, -62 - (slot - 1) * FILTER_ROW_HEIGHT)
 
 	row.checkbox = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
-	row.checkbox:SetSize(290, FILTER_ROW_HEIGHT)
+	row.checkbox:SetSize(FILTER_ROW_HEIGHT, FILTER_ROW_HEIGHT)
 	row.checkbox:SetPoint("LEFT")
 	row.checkbox:SetScript("OnClick", function(self)
 		if row.key == ns.charKey then
@@ -597,8 +597,8 @@ local function CharacterFilterRow(slot)
 	end)
 
 	row.label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	row.label:SetPoint("LEFT", row.checkbox, "LEFT", 26, 0)
-	row.label:SetPoint("RIGHT", row.checkbox, "RIGHT", -4, 0)
+	row.label:SetPoint("LEFT", row.checkbox, "RIGHT", 4, 0)
+	row.label:SetPoint("RIGHT", row, "RIGHT", -32, 0)
 	row.label:SetJustifyH("LEFT")
 	row.label:SetWordWrap(false)
 
