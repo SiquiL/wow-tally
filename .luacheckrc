@@ -11,6 +11,7 @@ globals = {
 	"Tally_OnAddonCompartmentClick",
 	"Tally_OnAddonCompartmentEnter",
 	"Tally_OnAddonCompartmentLeave",
+	"TallySettingsLinkMixin",
 }
 
 read_globals = {
@@ -30,6 +31,8 @@ read_globals = {
 	"CHAT_FRAMES",
 	"CLASS_ICON_TCOORDS",
 	"CreateSettingsButtonInitializer",
+	"CreateSettingsListSectionHeaderInitializer",
+	"CreateFromMixins",
 	"CreateFrame",
 	"Enum",
 	"FauxScrollFrame_GetOffset",
@@ -66,6 +69,7 @@ read_globals = {
 	"RAID_CLASS_COLORS",
 	"RequestTimePlayed",
 	"Settings",
+	"SettingsListElementMixin",
 	"StaticPopup_Show",
 	"UIParent",
 	"UISpecialFrames",

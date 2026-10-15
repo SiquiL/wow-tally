@@ -19,6 +19,7 @@ Milestones.lua
 UI.lua
 Export.lua
 Settings.lua
+Settings.xml
 modules\Steps.lua
 modules\Zones.lua
 modules\Deaths.lua

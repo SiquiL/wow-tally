@@ -110,6 +110,9 @@ options. Filter and export windows dock beside the main window. The export text 
 automatically, so it can be copied right away. The addon compartment next to the minimap has
 an entry as well: left-click toggles the window, right-click opens the options.
 
+The options panel ends with a **Links** section. It shows the address of the project page in
+a text box that selects itself on click, so the link can be copied into a browser.
+
 > [!NOTE]
 > Builds before 1.0.0 had the shortcuts `/steps` and `/deaths`. They are gone; use
 > `/tally steps` and `/tally deaths` instead.
@@ -370,6 +373,7 @@ interface versions are the recommended way to support several clients.
 | `UI.lua`                  | Window and its helper                                                                |
 | `Export.lua`              | CSV and JSON export                                                                  |
 | `Settings.lua`            | Options panel, `/tally options`, addon compartment                                   |
+| `Settings.xml`            | Template for the link row of the options panel                                       |
 | `locales\enUS.lua`        | Translation table; the English text is the key                                       |
 | `locales\deDE.lua`        | German translation                                                                   |
 | `modules\Steps.lua`       | Distance tracking and step report                                                    |

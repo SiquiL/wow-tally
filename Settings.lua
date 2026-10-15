@@ -5,6 +5,59 @@ local category
 local layout
 local registered = {}
 
+local GITHUB_URL = "https://github.com/SiquiL/wow-tally"
+
+-- The settings list builds its rows from a mixin on the template, and that mixin is only
+-- looked up once the panel is opened, so it can be assembled after the client is ready
+local function PrepareLinkTemplate()
+	if TallySettingsLinkMixin or not SettingsListElementMixin then
+		return
+	end
+
+	local mixin = CreateFromMixins(SettingsListElementMixin)
+
+	function mixin:OnLoad()
+		SettingsListElementMixin.OnLoad(self)
+
+		local box = CreateFrame("EditBox", nil, self, "InputBoxTemplate")
+		box:SetSize(300, 22)
+		box:SetPoint("LEFT", self, "CENTER", -75, 0)
+		box:SetAutoFocus(false)
+		box:SetFontObject("GameFontHighlightSmall")
+		box:SetScript("OnEscapePressed", box.ClearFocus)
+		box:SetScript("OnEnterPressed", box.ClearFocus)
+		box:SetScript("OnEditFocusGained", box.HighlightText)
+		-- The box exists to be copied, so any edit restores the address
+		box:SetScript("OnTextChanged", function(editBox, userInput)
+			if userInput then
+				editBox:SetText(self.url or "")
+				editBox:HighlightText()
+			end
+		end)
+		self.Link = box
+	end
+
+	function mixin:Init(initializer)
+		SettingsListElementMixin.Init(self, initializer)
+		self.url = self.data.url or ""
+		self.Link:SetText(self.url)
+		self.Link:SetCursorPosition(0)
+	end
+
+	TallySettingsLinkMixin = mixin
+end
+
+local function AddLink(name, url, tooltip)
+	if not (TallySettingsLinkMixin and Settings.CreateElementInitializer) then
+		return
+	end
+
+	local initializer = Settings.CreateElementInitializer("TallySettingsLinkTemplate",
+		{ name = name, url = url, tooltip = tooltip })
+	initializer:AddSearchTags(name)
+	layout:AddInitializer(initializer)
+end
+
 -- Goes through the registered setting so an open options panel reflects the change
 function ns.SetSetting(key, value)
 	if registered[key] then
@@ -50,6 +103,13 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 			true
 		))
 	end
+
+	if CreateSettingsListSectionHeaderInitializer then
+		PrepareLinkTemplate()
+		layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Links"]))
+		AddLink("GitHub", GITHUB_URL, L["Copy the address to open the project page in a browser."])
+	end
+
 	Settings.RegisterAddOnCategory(category)
 end
 
