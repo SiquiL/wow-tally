@@ -28,6 +28,7 @@ read_globals = {
 	"C_Spell",
 	"C_Timer",
 	"CHAT_FRAMES",
+	"CLASS_ICON_TCOORDS",
 	"CreateSettingsButtonInitializer",
 	"CreateFrame",
 	"Enum",

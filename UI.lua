@@ -15,6 +15,10 @@ local SCROLL_WIDTH = 20
 local ICON_SIZE = 26
 local ICON_INSET = 5
 local TOOLBAR_GAP = 12
+local CHARACTER_PANEL_WIDTH = 280
+local CHARACTER_PANEL_MIN_WIDTH = 200
+local CHARACTER_PANEL_GAP = 24
+local CHARACTER_INFO_HEIGHT = 48
 local FILTER_ICON = "Interface\\Icons\\INV_Misc_GroupNeedMore"
 local EXPORT_ICON = "Interface\\Icons\\INV_Scroll_03"
 local OPTIONS_ICON = "Interface\\Icons\\Trade_Engineering"
@@ -35,6 +39,11 @@ local window
 local scroll
 local measure
 local headerBackground
+local characterPanel
+local characterModel
+local characterPortrait
+local characterName
+local characterDetails
 local selected
 local optionsButton
 local filterWindow
@@ -45,6 +54,7 @@ local tabs = {}
 local tabsWidth = 0
 local headerButtons = {}
 local rowFrames = {}
+local tableWidth = 0
 local sinceRefresh = 0
 local moduleViewsRegistered = false
 local sortStates = {}
@@ -111,6 +121,51 @@ local function SetIconEnabled(button, enabled)
 	button:SetEnabled(enabled)
 	button.icon:SetDesaturated(not enabled)
 	button.icon:SetAlpha(enabled and 1 or 0.35)
+end
+
+local function UpdateCharacterPanel(updateModel)
+	if updateModel then
+		characterModel:SetUnit("player")
+		characterModel:SetPortraitZoom(0)
+	end
+
+	local className, classFile = UnitClass("player")
+	local coords = classFile and CLASS_ICON_TCOORDS[classFile]
+	if coords then
+		characterPortrait:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
+	end
+
+	local color = classFile and RAID_CLASS_COLORS[classFile]
+	if color then
+		characterName:SetTextColor(color.r, color.g, color.b)
+	else
+		characterName:SetTextColor(1, 1, 1)
+	end
+	characterName:SetText(ns.charKey)
+	characterDetails:SetText(L["Level %d %s"]:format(tonumber(ns.char.level) or 0, className or classFile or ""))
+end
+
+local function LayoutCharacterPanel(windowWidth, tableHasScroll, visibleRows)
+	if selected.key ~= "overview" then
+		characterPanel:Hide()
+		return
+	end
+
+	local tableRight = MARGIN + tableWidth + (tableHasScroll and SCROLL_WIDTH or 0)
+	local available = windowWidth - tableRight - MARGIN - CHARACTER_PANEL_GAP
+	if available < CHARACTER_PANEL_MIN_WIDTH then
+		characterPanel:Hide()
+		return
+	end
+
+	characterPanel:ClearAllPoints()
+	characterPanel:SetPoint("TOPRIGHT", window, "TOPRIGHT", -MARGIN, TABLE_TOP)
+	characterPanel:SetSize(
+		math.min(available, CHARACTER_PANEL_WIDTH),
+		HEADER_HEIGHT + visibleRows * ROW_HEIGHT
+	)
+	UpdateCharacterPanel(not characterPanel:IsShown())
+	characterPanel:Show()
 end
 
 local function SaveWindowState()
@@ -522,7 +577,6 @@ local function RowCell(frame, index)
 end
 
 local currentModel
-local tableWidth = 0
 
 local function RenderRows()
 	if not currentModel then
@@ -649,16 +703,16 @@ local function Refresh()
 	end
 
 	local visibleRows = math.min(math.max(#model.rows, 1), MAX_VISIBLE_ROWS)
+	local tableHasScroll = #model.rows > visibleRows
 	scroll:ClearAllPoints()
 	scroll:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, TABLE_TOP - HEADER_HEIGHT)
 	scroll:SetSize(tableWidth + SCROLL_WIDTH, visibleRows * ROW_HEIGHT)
 	FauxScrollFrame_Update(scroll, #model.rows, visibleRows, ROW_HEIGHT)
 	RenderRows()
 
-	window:SetSize(
-		math.max(tabsWidth, tableWidth + MARGIN * 2 + (#model.rows > visibleRows and SCROLL_WIDTH or 0)),
-		-TABLE_TOP + HEADER_HEIGHT + visibleRows * ROW_HEIGHT + MARGIN
-	)
+	local windowWidth = math.max(tabsWidth, tableWidth + MARGIN * 2 + (tableHasScroll and SCROLL_WIDTH or 0))
+	window:SetSize(windowWidth, -TABLE_TOP + HEADER_HEIGHT + visibleRows * ROW_HEIGHT + MARGIN)
+	LayoutCharacterPanel(windowWidth, tableHasScroll, visibleRows)
 end
 
 local function Select(view)
@@ -912,6 +966,39 @@ local function Build()
 
 	headerBackground = window:CreateTexture(nil, "BACKGROUND")
 	headerBackground:SetColorTexture(0, 0, 0, 0.3)
+
+	characterPanel = CreateFrame("Frame", nil, window)
+	characterPanel:Hide()
+	local panelBackground = characterPanel:CreateTexture(nil, "BACKGROUND")
+	panelBackground:SetAllPoints()
+	panelBackground:SetColorTexture(0, 0, 0, 0.18)
+
+	characterModel = CreateFrame("PlayerModel", nil, characterPanel)
+	characterModel:SetPoint("TOPLEFT")
+	characterModel:SetPoint("BOTTOMRIGHT", characterPanel, "BOTTOMRIGHT", 0, CHARACTER_INFO_HEIGHT)
+	characterModel:EnableMouse(false)
+
+	local portraitBackground = characterPanel:CreateTexture(nil, "BORDER")
+	portraitBackground:SetSize(42, 42)
+	portraitBackground:SetPoint("BOTTOMLEFT", 4, 3)
+	portraitBackground:SetColorTexture(0, 0, 0, 0.65)
+
+	characterPortrait = characterPanel:CreateTexture(nil, "ARTWORK")
+	characterPortrait:SetSize(36, 36)
+	characterPortrait:SetPoint("CENTER", portraitBackground)
+	characterPortrait:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
+
+	characterName = characterPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	characterName:SetPoint("BOTTOMLEFT", portraitBackground, "BOTTOMRIGHT", 8, 23)
+	characterName:SetPoint("RIGHT", characterPanel, "RIGHT", -4, 0)
+	characterName:SetJustifyH("LEFT")
+	characterName:SetWordWrap(false)
+
+	characterDetails = characterPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	characterDetails:SetPoint("TOPLEFT", characterName, "BOTTOMLEFT", 0, -3)
+	characterDetails:SetPoint("RIGHT", characterPanel, "RIGHT", -4, 0)
+	characterDetails:SetJustifyH("LEFT")
+	characterDetails:SetWordWrap(false)
 
 	scroll = CreateFrame("ScrollFrame", "TallyTableScrollFrame", window, "FauxScrollFrameTemplate")
 	scroll:SetScript("OnVerticalScroll", function(self, offset)

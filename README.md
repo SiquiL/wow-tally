@@ -31,7 +31,7 @@ and more. Every counter is kept per character and summed for the whole account.
 | Professions | Fish caught, herbs, ore and leather looted, items crafted and skill-ups                 |
 | Playtime    | Time played, kept in sync with the game's `/played`                                     |
 
-- **Overview and module tables** — the current character and highlighted account totals in a consistent module order
+- **Overview and module tables** — the current character with a 3D model and class portrait, plus highlighted account totals in a consistent module order
 - **Character ranking** — compare every included character across selected headline metrics
 - **Character filter** — include or exclude stored characters from totals, reports, rankings and exports, reset or remove them
 - **Zone table** — account-wide playtime and distance per movement mode for every visited zone, excluding continent overview maps
