@@ -119,7 +119,14 @@ L["Fun fact: the account has covered %d%% of %s."] = "Fun Fact: Der Account hat 
 L["Zones"] = "Zonen"
 L["Zones visited"] = "Besuchte Zonen"
 L["Time in zones"] = "Zeit in Zonen"
-L["Distance in zones"] = "Strecke in Zonen"
+L["Total distance in zones"] = "Gesamtstrecke in Zonen"
+L["Zone"] = "Zone"
+L["Unknown zone (%d)"] = "Unbekannte Zone (%d)"
+L["Dungeon"] = "Dungeon"
+L["Raid"] = "Schlachtzug"
+L["Battleground"] = "Schlachtfeld"
+L["Arena"] = "Arena"
+L["Scenario"] = "Szenario"
 
 -- Deaths
 L["Deaths"] = "Tode"

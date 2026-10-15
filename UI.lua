@@ -359,6 +359,9 @@ local function EnsureModuleViews()
 		ns.RegisterView(current.key, {
 			label = current.label,
 			Build = function()
+				if current.BuildView then
+					return current:BuildView()
+				end
 				return BuildModuleTable(current)
 			end,
 		})
