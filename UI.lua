@@ -284,8 +284,9 @@ local function BuildRanking()
 			key = "character",
 			label = L["Character"],
 			align = "LEFT",
-			sortType = "text",
-			sortDirection = "asc",
+			sortType = "number",
+			sortDirection = "desc",
+			sortTooltip = L["Click to rank characters by level."],
 			minWidth = 80,
 		},
 	}
@@ -318,7 +319,7 @@ local function BuildRanking()
 
 		local cells = {
 			{ text = "" },
-			{ text = ns.CharLabel(key, data), sort = key:lower() },
+			{ text = ns.CharLabel(key, data), sort = tonumber(data.level) or 0 },
 		}
 		for index, metric in ipairs(metrics) do
 			cells[index + 2] = EntryCell(entriesByMetric[metric.columnKey])
@@ -464,7 +465,7 @@ local function HeaderButton(index)
 		end
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
 		GameTooltip:SetText(self.column.label)
-		GameTooltip:AddLine(L["Click to sort this column."], 1, 1, 1)
+		GameTooltip:AddLine(self.column.sortTooltip or L["Click to sort this column."], 1, 1, 1)
 		GameTooltip:Show()
 	end)
 	button:SetScript("OnLeave", function()
@@ -612,6 +613,7 @@ local function Refresh()
 		button:GetFontString():SetJustifyH(current.align)
 		button.column = current
 		button:SetText(SortLabel(current))
+		button:EnableMouse(current.sortable ~= false)
 		local sortState = sortStates[selected.key]
 		if sortState and sortState.key == current.key then
 			button:GetFontString():SetTextColor(1, 0.82, 0)
