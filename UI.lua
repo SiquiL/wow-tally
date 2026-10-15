@@ -6,6 +6,7 @@ local HEADER_HEIGHT = 20
 local MAX_VISIBLE_ROWS = 15
 local FILTER_ROW_HEIGHT = 24
 local MAX_FILTER_ROWS = 12
+local FILTER_GAP = 6
 local TAB_HEIGHT, TAB_PADDING, TAB_GAP = 22, 24, 2
 local TABLE_TOP = -(32 + TAB_HEIGHT + 8)
 local MARGIN = 14
@@ -663,6 +664,22 @@ RefreshCharacterFilter = function()
 	RenderCharacterFilter()
 end
 
+-- Docked to the main window so the two frames never cover each other
+local function AnchorCharacterFilter()
+	filterWindow:ClearAllPoints()
+	if not window then
+		filterWindow:SetPoint("CENTER")
+		return
+	end
+
+	local spaceRight = UIParent:GetRight() - window:GetRight()
+	if spaceRight >= filterWindow:GetWidth() + FILTER_GAP then
+		filterWindow:SetPoint("TOPLEFT", window, "TOPRIGHT", FILTER_GAP, 0)
+	else
+		filterWindow:SetPoint("TOPRIGHT", window, "TOPLEFT", -FILTER_GAP, 0)
+	end
+end
+
 local function SetCharacterFilter(mode)
 	if mode == "all" then
 		TallyDB.settings.hidden = {}
@@ -706,7 +723,10 @@ local function BuildCharacterFilter()
 	for slot = 1, MAX_FILTER_ROWS do
 		CharacterFilterRow(slot)
 	end
-	filterWindow:SetScript("OnShow", RefreshCharacterFilter)
+	filterWindow:SetScript("OnShow", function()
+		RefreshCharacterFilter()
+		AnchorCharacterFilter()
+	end)
 end
 
 local function ToggleCharacterFilter()
