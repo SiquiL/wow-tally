@@ -665,19 +665,24 @@ RefreshCharacterFilter = function()
 end
 
 -- Docked to the main window so the two frames never cover each other
-local function AnchorCharacterFilter()
-	filterWindow:ClearAllPoints()
+function ns.DockWindowBeside(frame)
+	frame:ClearAllPoints()
 	if not window then
-		filterWindow:SetPoint("CENTER")
+		frame:SetPoint("CENTER")
 		return
 	end
 
+	local gap = FILTER_GAP
 	local spaceRight = UIParent:GetRight() - window:GetRight()
-	if spaceRight >= filterWindow:GetWidth() + FILTER_GAP then
-		filterWindow:SetPoint("TOPLEFT", window, "TOPRIGHT", FILTER_GAP, 0)
+	if spaceRight >= frame:GetWidth() + gap then
+		frame:SetPoint("TOPLEFT", window, "TOPRIGHT", gap, 0)
 	else
-		filterWindow:SetPoint("TOPRIGHT", window, "TOPLEFT", -FILTER_GAP, 0)
+		frame:SetPoint("TOPRIGHT", window, "TOPLEFT", -gap, 0)
 	end
+end
+
+local function AnchorCharacterFilter()
+	ns.DockWindowBeside(filterWindow)
 end
 
 local function SetCharacterFilter(mode)

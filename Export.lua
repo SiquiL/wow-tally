@@ -158,6 +158,9 @@ ns.RegisterCommand("export", function(rest)
 		end
 	end
 
+	window:SetScript("OnShow", function()
+		ns.DockWindowBeside(window)
+	end)
 	window:Show()
 	SetFormat(format)
 end, L["/tally export [csv|json] – copyable export of all values"])
