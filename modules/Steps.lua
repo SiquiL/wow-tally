@@ -79,7 +79,11 @@ local function Tick(_, elapsed)
 		steps.blind = steps.blind + elapsed
 	elseif speed and speed > 0 then
 		local mode = gliding and "flight" or currentMode
-		steps[mode] = steps[mode] + speed * elapsed
+		local yards = speed * elapsed
+		steps[mode] = steps[mode] + yards
+		if ns.RecordZoneDistance then
+			ns.RecordZoneDistance(mode, yards)
+		end
 	end
 end
 

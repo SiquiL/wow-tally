@@ -20,6 +20,7 @@ UI.lua
 Export.lua
 Settings.lua
 modules\Steps.lua
+modules\Zones.lua
 modules\Deaths.lua
 modules\Gold.lua
 modules\Quests.lua

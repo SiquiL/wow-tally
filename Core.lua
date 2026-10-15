@@ -1,7 +1,7 @@
 local addonName, ns = ...
 local L = ns.L
 
-local DB_VERSION = 2
+local DB_VERSION = 3
 local SEED_DELAY = 3
 local PREFIX = "|cff33ff99Tally|r: "
 local INVALID = "|cffff5555" .. L["invalid"] .. "|r"
@@ -580,6 +580,12 @@ local function MigrateDB(version)
 			x = 0,
 			y = 0,
 		}
+	end
+
+	if version < 3 then
+		for _, data in pairs(TallyDB.chars) do
+			data.zones = data.zones or {}
+		end
 	end
 end
 

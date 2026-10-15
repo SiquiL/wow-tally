@@ -115,6 +115,12 @@ L["%s km travelled"] = "%s km zurückgelegt"
 L["Fun fact: the account has covered %.1f× %s."] = "Fun Fact: Der Account hat %.1f× die Strecke %s zurückgelegt."
 L["Fun fact: the account has covered %d%% of %s."] = "Fun Fact: Der Account hat %d %% der Strecke %s zurückgelegt."
 
+-- Zones
+L["Zones"] = "Zonen"
+L["Zones visited"] = "Besuchte Zonen"
+L["Time in zones"] = "Zeit in Zonen"
+L["Distance in zones"] = "Strecke in Zonen"
+
 -- Deaths
 L["Deaths"] = "Tode"
 L["Deaths: %s"] = "Tode: %s"
