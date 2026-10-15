@@ -21,7 +21,7 @@ and more. Every counter is kept per character and summed for the whole account.
 
 | Module      | Counts                                                                                  |
 | ----------- | --------------------------------------------------------------------------------------- |
-| Steps       | Distance on foot, mounted, swimming, flying and by flight path, in steps and kilometers |
+| Steps       | Distance on foot in steps and km, all other movement in km                              |
 | Deaths      | How often a character has died                                                          |
 | Gold        | Gold earned and spent, and the balance on hand                                          |
 | Quests      | Quests turned in and the quest XP gained                                                |
@@ -107,10 +107,10 @@ has an entry as well: left-click toggles the window, right-click opens the optio
 ```
 Tally: Steps – Siqlock-Thunderstrike, step length 0.75 m
   On foot: 12,480 steps (9.36 km)
-  Mounted: 3,204 steps (2.40 km)
-  Swimming: 190 steps (0.14 km)
-  Total distance: 11.91 km (15,874 steps)
-  Account total: 30.75 km (41,002 steps)
+  Mounted: 2.40 km
+  Swimming: 0.14 km
+  Total distance: 11.90 km
+  Account total: 30.75 km
   Fun fact: the account has covered 72% of a marathon.
 Tally: Deaths – Siqlock-Thunderstrike
   Deaths: 7
@@ -151,8 +151,12 @@ report is printed, so changing a step length later corrects the numbers retroact
 | Mounted     | `IsMounted()`                                           |
 | On foot     | everything else                                         |
 
-Flying and flight paths count towards the kilometer total but not towards steps, and are
-only listed once they are non-zero.
+Only walking is counted in steps; mounted, swimming, flying and flight path distances are
+shown in kilometers only, and the total distance is the sum of all modes in kilometers. Flying
+and flight paths are only listed once they are non-zero.
+
+In the window, the unit of every column is part of its header, e.g. `On foot (steps / km)`
+or `Mounted (km)`, and the cells contain the numbers only.
 
 The step length is looked up from the character's race via `UnitRace("player")` and ranges
 from 0.55 m (Gnome, Goblin, Mechagnome, Vulpera) to 0.95 m (Tauren, Kul Tiran). Unknown
@@ -380,6 +384,7 @@ function module:Summary(charData)
 	return {
 		{ key = "value", label = L["Value"], value = charData.example.value, total = true },
 		-- optional per entry: value2, unit, unit2, fmt(value, value2) -> text, extra,
+		-- cell(value, value2) -> text for the window, headerUnit shown in the column header,
 		-- optional = true hides the entry while it is zero
 	}
 end

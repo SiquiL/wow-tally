@@ -9,6 +9,11 @@ local INVALID = "|cffff5555" .. L["invalid"] .. "|r"
 -- issecretvalue only exists from patch 12.0.0 onwards
 ns.isSecret = issecretvalue or function() return false end
 
+-- Units shown in the column headers of the window
+ns.UNIT_COUNT = L["count"]
+ns.UNIT_DURATION = "d / h / m / s"
+ns.UNIT_MONEY = "g / s / c"
+
 ns.modules = {}
 ns.moduleList = {}
 ns.commands = {}
@@ -129,6 +134,8 @@ end
 -- Summary entries ------------------------------------------------------------
 -- A module's Summary(charData) returns an ordered list of entries:
 --   key, label, value, [value2], [unit], [unit2], [fmt(value, value2) -> text, extra],
+--   [cell(value, value2) -> text] for the window table (default: the text of fmt),
+--   [headerUnit] appended to the column header of the window, e.g. "km",
 --   [total] marks the headline entry, [optional] hides the entry while it is zero.
 
 function ns.GetEntries(module, data)
@@ -174,6 +181,13 @@ function ns.FormatEntry(entry)
 		return entry.fmt(entry.value, entry.value2)
 	end
 	return ns.FormatCount(entry.value)
+end
+
+function ns.FormatCell(entry)
+	if entry.cell then
+		return entry.cell(entry.value, entry.value2)
+	end
+	return (ns.FormatEntry(entry))
 end
 
 local function IsVisible(entry)

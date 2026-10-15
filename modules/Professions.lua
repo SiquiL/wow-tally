@@ -123,12 +123,12 @@ end
 function module:Summary(charData)
 	local section = charData.professions
 	return {
-		{ key = "fish", label = L["Fish caught"], value = section.fish or 0, total = true },
-		{ key = "herbs", label = L["Herbs"], value = section.herbs or 0, optional = true },
-		{ key = "ore", label = L["Ore and stone"], value = section.ore or 0, optional = true },
-		{ key = "leather", label = L["Leather"], value = section.leather or 0, optional = true },
-		{ key = "crafted", label = L["Items crafted"], value = section.crafted or 0, optional = true },
-		{ key = "skillups", label = L["Skill-ups"], value = section.skillups or 0, optional = true },
+		{ key = "fish", label = L["Fish caught"], value = section.fish or 0, headerUnit = ns.UNIT_COUNT, total = true },
+		{ key = "herbs", label = L["Herbs"], value = section.herbs or 0, headerUnit = ns.UNIT_COUNT, optional = true },
+		{ key = "ore", label = L["Ore and stone"], value = section.ore or 0, headerUnit = ns.UNIT_COUNT, optional = true },
+		{ key = "leather", label = L["Leather"], value = section.leather or 0, headerUnit = ns.UNIT_COUNT, optional = true },
+		{ key = "crafted", label = L["Items crafted"], value = section.crafted or 0, headerUnit = ns.UNIT_COUNT, optional = true },
+		{ key = "skillups", label = L["Skill-ups"], value = section.skillups or 0, headerUnit = ns.UNIT_COUNT, optional = true },
 	}
 end
 

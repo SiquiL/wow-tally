@@ -78,9 +78,9 @@ function module:Summary(charData)
 	local section = charData.teleports
 	local hearth, teleport = section.hearth or 0, section.teleport or 0
 	return {
-		{ key = "hearth", label = L["Hearthstone"], value = hearth },
-		{ key = "teleport", label = L["Teleport spells"], value = teleport },
-		{ key = "total", label = L["Total"], value = hearth + teleport, total = true },
+		{ key = "hearth", label = L["Hearthstone"], value = hearth, headerUnit = ns.UNIT_COUNT },
+		{ key = "teleport", label = L["Teleport spells"], value = teleport, headerUnit = ns.UNIT_COUNT },
+		{ key = "total", label = L["Total"], value = hearth + teleport, headerUnit = ns.UNIT_COUNT, total = true },
 	}
 end
 

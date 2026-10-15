@@ -82,7 +82,7 @@ function module:Summary(charData)
 		total = total + GetTime() - sessionStart
 	end
 	return {
-		{ key = "total", label = L["Total"], value = total, unit = "s", fmt = ns.FormatDuration, total = true },
+		{ key = "total", label = L["Total"], value = total, unit = "s", headerUnit = ns.UNIT_DURATION, fmt = ns.FormatDuration, total = true },
 	}
 end
 

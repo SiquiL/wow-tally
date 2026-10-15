@@ -99,9 +99,9 @@ end
 function module:Summary(charData)
 	local section = charData.gold
 	return {
-		{ key = "earned", label = L["Earned"], value = section.earned or 0, unit = "copper", fmt = FormatMoney, total = true },
-		{ key = "spent", label = L["Spent"], value = section.spent or 0, unit = "copper", fmt = FormatMoney, total = true },
-		{ key = "current", label = L["On hand"], value = section.current or 0, unit = "copper", fmt = FormatMoney, total = true },
+		{ key = "earned", label = L["Earned"], value = section.earned or 0, unit = "copper", headerUnit = ns.UNIT_MONEY, fmt = FormatMoney, total = true },
+		{ key = "spent", label = L["Spent"], value = section.spent or 0, unit = "copper", headerUnit = ns.UNIT_MONEY, fmt = FormatMoney, total = true },
+		{ key = "current", label = L["On hand"], value = section.current or 0, unit = "copper", headerUnit = ns.UNIT_MONEY, fmt = FormatMoney, total = true },
 	}
 end
 
