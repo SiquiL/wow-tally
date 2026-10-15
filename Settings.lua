@@ -33,6 +33,11 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 		TallyDB.settings, "boolean", L["Announce milestones"], true)
 	Settings.CreateCheckbox(category, milestones, L["Print a chat message when a counter reaches a milestone."])
 	registered.milestones = milestones
+
+	local hideEmpty = Settings.RegisterAddOnSetting(category, "Tally_HideEmpty", "hideEmpty",
+		TallyDB.settings, "boolean", L["Hide empty columns"], true)
+	Settings.CreateCheckbox(category, hideEmpty, L["Hide table columns that contain no recorded values."])
+	registered.hideEmpty = hideEmpty
 	Settings.RegisterAddOnCategory(category)
 end
 

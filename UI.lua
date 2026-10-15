@@ -122,12 +122,28 @@ end
 
 local function BuildModuleTable(module)
 	local totals = ns.AccountEntries(module)
+	local characters = {}
+	local populated = {}
+
+	ns.ForEachChar(function(key, data)
+		local entries = ns.GetEntries(module, data)
+		if entries then
+			characters[#characters + 1] = { key = key, data = data, entries = entries }
+			for _, entry in ipairs(entries) do
+				if entry.value ~= 0 or (entry.value2 or 0) ~= 0 then
+					populated[entry.key] = true
+				end
+			end
+		end
+	end)
+
 	local columns = {
 		{ key = "character", label = L["Character"], align = "LEFT", sortType = "text" },
 	}
 
 	for _, entry in ipairs(totals) do
-		if ns.IsVisible(entry) then
+		local hasValues = populated[entry.key]
+		if (not entry.optional or hasValues) and (not TallyDB.settings.hideEmpty or hasValues) then
 			columns[#columns + 1] = {
 				key = entry.key,
 				label = HeaderText(entry),
@@ -138,14 +154,11 @@ local function BuildModuleTable(module)
 	end
 
 	local rows = {}
-	ns.ForEachChar(function(key, data)
-		local entries = ns.GetEntries(module, data)
-		if entries then
-			local cells = EntryCells(entries, columns)
-			cells[1] = { text = ns.CharLabel(key, data), sort = key:lower() }
-			rows[#rows + 1] = { key = key, cells = cells }
-		end
-	end)
+	for _, character in ipairs(characters) do
+		local cells = EntryCells(character.entries, columns)
+		cells[1] = { text = ns.CharLabel(character.key, character.data), sort = character.key:lower() }
+		rows[#rows + 1] = { key = character.key, cells = cells }
+	end
 
 	local cells = EntryCells(totals, columns)
 	cells[1] = { text = L["Account total"], sort = "" }
@@ -262,6 +275,15 @@ local function HeaderButton(index)
 	button:SetNormalFontObject("GameFontNormalSmall")
 	button:SetHighlightFontObject("GameFontHighlightSmall")
 	label:SetWordWrap(false)
+	button:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_TOP")
+		GameTooltip:SetText(self.column.label)
+		GameTooltip:AddLine(L["Click to sort this column."], 1, 1, 1)
+		GameTooltip:Show()
+	end)
+	button:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 	headerButtons[index] = button
 	return button
 end
@@ -390,6 +412,7 @@ local function Refresh()
 		button:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN + current.left, TABLE_TOP)
 		button:SetSize(current.width, HEADER_HEIGHT)
 		button:GetFontString():SetJustifyH(current.align)
+		button.column = current
 		button:SetText(SortLabel(current))
 		button:SetScript("OnClick", function()
 			SetSort(current)
