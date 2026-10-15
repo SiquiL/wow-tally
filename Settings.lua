@@ -46,7 +46,8 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 			resetLabel,
 			resetLabel,
 			ns.ResetWindowPosition,
-			L["Move the Tally window back to the center of the screen."]
+			L["Move the Tally window back to the center of the screen."],
+			true
 		))
 	end
 	Settings.RegisterAddOnCategory(category)
