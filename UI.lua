@@ -9,7 +9,9 @@ local TABLE_TOP = -(32 + TAB_HEIGHT + 8)
 local MARGIN = 14
 local COLUMN_GAP = 16
 local SCROLL_WIDTH = 20
-local ICON_SIZE = 22
+local ICON_SIZE = 26
+local ICON_INSET = 5
+local TOOLBAR_GAP = 12
 local EXPORT_ICON = "Interface\\Icons\\INV_Scroll_03"
 local OPTIONS_ICON = "Interface\\Icons\\Trade_Engineering"
 
@@ -59,23 +61,16 @@ function ns.CreateWindow(name, width, height, title)
 	return created
 end
 
--- An icon button has no label, so its meaning lives in the tooltip
 local function IconButton(icon, tooltip, disabledTooltip, onClick)
-	local button = CreateFrame("Button", nil, window)
+	local button = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
 	button:SetSize(ICON_SIZE, ICON_SIZE)
 
-	local backdrop = button:CreateTexture(nil, "BACKGROUND")
-	backdrop:SetPoint("TOPLEFT", -1, 1)
-	backdrop:SetPoint("BOTTOMRIGHT", 1, -1)
-	backdrop:SetColorTexture(0, 0, 0, 0.8)
-
-	-- Icon art carries a border that does not fit a flat button
 	button.icon = button:CreateTexture(nil, "ARTWORK")
-	button.icon:SetAllPoints()
+	button.icon:SetPoint("TOPLEFT", ICON_INSET, -ICON_INSET)
+	button.icon:SetPoint("BOTTOMRIGHT", -ICON_INSET, ICON_INSET)
 	button.icon:SetTexture(icon)
 	button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-	button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
 	button:SetScript("OnClick", onClick)
 	button:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -92,7 +87,6 @@ local function IconButton(icon, tooltip, disabledTooltip, onClick)
 	return button
 end
 
--- A disabled button still answers OnEnter, so the tooltip can explain why
 local function SetIconEnabled(button, enabled)
 	button:SetEnabled(enabled)
 	button.icon:SetDesaturated(not enabled)
@@ -474,20 +468,17 @@ local function Build()
 		tabs[index] = tab
 	end
 
-	x = x + 8
 	local exportButton = IconButton(EXPORT_ICON, L["Export"], nil, function()
 		ns.commands.export("")
 	end)
-	exportButton:SetPoint("TOPLEFT", x, -30)
-	x = x + ICON_SIZE + TAB_GAP + 2
 
 	optionsButton = IconButton(OPTIONS_ICON, L["Options"], L["The options cannot be opened in combat."], function()
 		ns.commands.options("")
 	end)
-	optionsButton:SetPoint("TOPLEFT", x, -30)
-	x = x + ICON_SIZE + TAB_GAP
+	optionsButton:SetPoint("TOPRIGHT", window, "TOPRIGHT", -MARGIN, -28)
+	exportButton:SetPoint("RIGHT", optionsButton, "LEFT", -TAB_GAP, 0)
 
-	tabsWidth = x - TAB_GAP + 12
+	tabsWidth = x + TOOLBAR_GAP + ICON_SIZE * 2 + TAB_GAP + MARGIN
 end
 
 ns.RegisterCommand("window", function(rest)
