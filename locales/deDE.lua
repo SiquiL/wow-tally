@@ -63,6 +63,8 @@ L["/tally milestones [on|off] – announce reached milestones"] = "/tally milest
 -- Window and export
 L["Overview"] = "Übersicht"
 L["Statistic"] = "Statistik"
+L["Ranking"] = "Rangliste"
+L["Rank"] = "Rang"
 L["Character"] = "Charakter"
 L["Character filter"] = "Charakterfilter"
 L["The character filter could not be created – %s"] = "Der Charakterfilter konnte nicht erstellt werden – %s"

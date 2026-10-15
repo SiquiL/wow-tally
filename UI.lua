@@ -235,6 +235,14 @@ local function OverviewLabel(module, entry)
 	return ("%s – %s"):format(module.label, entry.label)
 end
 
+local function RankingLabel(module, entry)
+	local label = OverviewLabel(module, entry)
+	if entry.headerUnit then
+		return ("%s (%s)"):format(label, entry.headerUnit)
+	end
+	return label
+end
+
 local function BuildOverview()
 	local columns = {
 		{ key = "statistic", label = L["Statistic"], align = "LEFT", sortType = "text" },
@@ -269,6 +277,58 @@ local function BuildOverview()
 	return { columns = columns, rows = rows }
 end
 
+local function BuildRanking()
+	local columns = {
+		{ key = "rank", label = L["Rank"], align = "RIGHT", sortable = false, minWidth = 32 },
+		{ key = "character", label = L["Character"], align = "LEFT", sortType = "text", minWidth = 80 },
+	}
+	local metrics = {}
+
+	for _, module in ipairs(ns.moduleList) do
+		for _, entry in ipairs(ns.AccountEntries(module)) do
+			if entry.total then
+				local key = module.key .. "." .. entry.key
+				metrics[#metrics + 1] = { columnKey = key }
+				columns[#columns + 1] = {
+					key = key,
+					label = RankingLabel(module, entry),
+					align = "RIGHT",
+					sortType = "number",
+				}
+			end
+		end
+	end
+
+	local rows = {}
+	ns.ForEachChar(function(key, data)
+		local entriesByMetric = {}
+		for _, module in ipairs(ns.moduleList) do
+			for _, entry in ipairs(ns.GetEntries(module, data) or {}) do
+				entriesByMetric[module.key .. "." .. entry.key] = entry
+			end
+		end
+
+		local cells = {
+			{ text = "" },
+			{ text = ns.CharLabel(key, data), sort = key:lower() },
+		}
+		for index, metric in ipairs(metrics) do
+			cells[index + 2] = EntryCell(entriesByMetric[metric.columnKey])
+		end
+		rows[#rows + 1] = { key = key, cells = cells }
+	end)
+
+	local defaultSort = metrics[1]
+		and { key = metrics[1].columnKey, direction = "desc" }
+		or { key = "character", direction = "asc" }
+	return {
+		columns = columns,
+		rows = rows,
+		rankColumn = 1,
+		defaultSort = defaultSort,
+	}
+end
+
 local function EnsureModuleViews()
 	if moduleViewsRegistered then
 		return
@@ -278,6 +338,11 @@ local function EnsureModuleViews()
 	ns.RegisterView("overview", {
 		label = L["Overview"],
 		Build = BuildOverview,
+	})
+
+	ns.RegisterView("ranking", {
+		label = L["Ranking"],
+		Build = BuildRanking,
 	})
 
 	for _, module in ipairs(ns.moduleList) do
@@ -294,7 +359,7 @@ end
 local function SortRows(model)
 	local state = sortStates[selected.key]
 	if not state then
-		state = { key = model.columns[1].key, direction = "asc" }
+		state = model.defaultSort or { key = model.columns[1].key, direction = "asc" }
 		sortStates[selected.key] = state
 	end
 
@@ -338,6 +403,11 @@ local function SortRows(model)
 	for _, row in ipairs(fixed) do
 		model.rows[#model.rows + 1] = row
 	end
+	if model.rankColumn then
+		for rank, row in ipairs(sortable) do
+			row.cells[model.rankColumn] = { text = tostring(rank), sort = rank }
+		end
+	end
 end
 
 local function SortLabel(column)
@@ -357,7 +427,8 @@ end
 local function LayoutColumns(model)
 	local left = 0
 	for index, column in ipairs(model.columns) do
-		column.width = math.max(Measure("GameFontNormalSmall", SortLabel(column)), index == 1 and 80 or 32)
+		local minWidth = column.minWidth or (index == 1 and 80 or 32)
+		column.width = math.max(Measure("GameFontNormalSmall", SortLabel(column)), minWidth)
 		for _, row in ipairs(model.rows) do
 			local cell = row.cells[index]
 			local font = (row.role == "total" or cell and cell.role == "total")
@@ -384,6 +455,9 @@ local function HeaderButton(index)
 	button:SetHighlightFontObject("GameFontHighlightSmall")
 	label:SetWordWrap(false)
 	button:SetScript("OnEnter", function(self)
+		if self.column.sortable == false then
+			return
+		end
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
 		GameTooltip:SetText(self.column.label)
 		GameTooltip:AddLine(L["Click to sort this column."], 1, 1, 1)
@@ -475,6 +549,9 @@ local function RenderRows()
 end
 
 local function SetSort(column)
+	if column.sortable == false then
+		return
+	end
 	local state = sortStates[selected.key]
 	if state and state.key == column.key then
 		state.direction = state.direction == "asc" and "desc" or "asc"
@@ -527,8 +604,10 @@ local function Refresh()
 		button.column = current
 		button:SetText(SortLabel(current))
 		button:SetScript("OnClick", function()
-			SetSort(current)
-			Refresh()
+			if current.sortable ~= false then
+				SetSort(current)
+				Refresh()
+			end
 		end)
 		button:Show()
 	end
