@@ -280,7 +280,14 @@ end
 local function BuildRanking()
 	local columns = {
 		{ key = "rank", label = L["Rank"], align = "RIGHT", sortable = false, minWidth = 32 },
-		{ key = "character", label = L["Character"], align = "LEFT", sortType = "text", minWidth = 80 },
+		{
+			key = "character",
+			label = L["Character"],
+			align = "LEFT",
+			sortType = "text",
+			sortDirection = "asc",
+			minWidth = 80,
+		},
 	}
 	local metrics = {}
 
@@ -294,6 +301,7 @@ local function BuildRanking()
 					label = RankingLabel(module, entry),
 					align = "RIGHT",
 					sortType = "number",
+					sortDirection = "desc",
 				}
 			end
 		end
@@ -553,7 +561,12 @@ local function SetSort(column)
 		return
 	end
 	local state = sortStates[selected.key]
-	if state and state.key == column.key then
+	if column.sortDirection then
+		sortStates[selected.key] = {
+			key = column.key,
+			direction = column.sortDirection,
+		}
+	elseif state and state.key == column.key then
 		state.direction = state.direction == "asc" and "desc" or "asc"
 	else
 		sortStates[selected.key] = {
