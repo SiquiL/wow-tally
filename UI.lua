@@ -13,6 +13,7 @@ local SCROLL_WIDTH = 20
 local window
 local scroll
 local measure
+local headerBackground
 local selected
 local tabs = {}
 local tabsWidth = 0
@@ -235,6 +236,14 @@ local function RowFrame(index)
 
 	frame = CreateFrame("Frame", nil, window)
 	frame.cells = {}
+	frame.background = frame:CreateTexture(nil, "BACKGROUND")
+	frame.background:SetAllPoints()
+	frame.background:SetColorTexture(1, 0.82, 0, 0.08)
+	frame.separator = frame:CreateTexture(nil, "ARTWORK")
+	frame.separator:SetPoint("TOPLEFT")
+	frame.separator:SetPoint("TOPRIGHT")
+	frame.separator:SetHeight(1)
+	frame.separator:SetColorTexture(1, 0.82, 0, 0.45)
 	rowFrames[index] = frame
 	return frame
 end
@@ -265,6 +274,13 @@ local function RenderRows()
 			frame:ClearAllPoints()
 			frame:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, TABLE_TOP - HEADER_HEIGHT - (slot - 1) * ROW_HEIGHT)
 			frame:SetSize(tableWidth, ROW_HEIGHT)
+			if row.role == "total" then
+				frame.background:Show()
+				frame.separator:Show()
+			else
+				frame.background:Hide()
+				frame.separator:Hide()
+			end
 			frame:Show()
 
 			for index, column in ipairs(currentModel.columns) do
@@ -321,6 +337,10 @@ local function Refresh()
 	currentModel = model
 	tableWidth = LayoutColumns(model)
 
+	headerBackground:ClearAllPoints()
+	headerBackground:SetPoint("TOPLEFT", window, "TOPLEFT", MARGIN, TABLE_TOP)
+	headerBackground:SetSize(tableWidth, HEADER_HEIGHT)
+
 	for index, column in ipairs(model.columns) do
 		local current = column
 		local button = HeaderButton(index)
@@ -374,6 +394,9 @@ local function Build()
 	measure = window:CreateFontString(nil, "OVERLAY")
 	measure:SetPoint("TOPLEFT", window, "BOTTOMLEFT", -1000, -1000)
 	measure:SetAlpha(0)
+
+	headerBackground = window:CreateTexture(nil, "BACKGROUND")
+	headerBackground:SetColorTexture(0, 0, 0, 0.3)
 
 	scroll = CreateFrame("ScrollFrame", "TallyTableScrollFrame", window, "FauxScrollFrameTemplate")
 	scroll:SetScript("OnVerticalScroll", function(self, offset)
