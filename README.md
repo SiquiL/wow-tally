@@ -155,8 +155,8 @@ Only walking is counted in steps; mounted, swimming, flying and flight path dist
 shown in kilometers only, and the total distance is the sum of all modes in kilometers. Flying
 and flight paths are only listed once they are non-zero.
 
-In the window, the unit of every column is part of its header, e.g. `On foot (steps / km)`
-or `Mounted (km)`, and the cells contain the numbers only.
+In the Steps window, distance units are part of the column headers, e.g.
+`On foot (steps / km)` or `Mounted (km)`, and the cells contain the numbers only.
 
 The step length is looked up from the character's race via `UnitRace("player")` and ranges
 from 0.55 m (Gnome, Goblin, Mechagnome, Vulpera) to 0.95 m (Tauren, Kul Tiran). Unknown
@@ -423,12 +423,12 @@ Raise `## Version` in `Tally.toc` and commit. Then tag that commit and build a z
 folder is `Tally`, so it can be extracted into `Interface\AddOns` as it is:
 
 ```powershell
-git tag v1.0.0
-git push origin main v1.0.0
-git archive --format zip --prefix Tally/ --output Tally-1.0.0.zip v1.0.0
+git tag v1.1.0
+git push origin main v1.1.0
+git archive --format zip --prefix Tally/ --output Tally-1.1.0.zip v1.1.0
 ```
 
-Create the GitHub release from that tag and attach `Tally-1.0.0.zip`. The release badge at
+Create the GitHub release from that tag and attach `Tally-1.1.0.zip`. The release badge at
 the top of this file follows the newest release on its own.
 
 `.gitattributes` marks everything the game does not load (README, `docs`, `assets` and the

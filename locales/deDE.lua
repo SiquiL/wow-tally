@@ -62,8 +62,6 @@ L["/tally milestones [on|off] – announce reached milestones"] = "/tally milest
 
 -- Window and export
 L["Character"] = "Charakter"
-L["count"] = "Anzahl"
-L["XP"] = "EP"
 L["The window could not be created – %s"] = "Das Fenster konnte nicht erstellt werden – %s"
 L["/tally window [module] – table of every character"] = "/tally window [Modul] – Tabelle aller Charaktere"
 L["Tally export"] = "Tally-Export"

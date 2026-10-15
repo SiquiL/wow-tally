@@ -7,3 +7,4 @@
 /README.md export-ignore
 /assets export-ignore
 /docs export-ignore
+/*.zip export-ignore

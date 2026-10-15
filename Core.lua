@@ -9,8 +9,6 @@ local INVALID = "|cffff5555" .. L["invalid"] .. "|r"
 -- issecretvalue only exists from patch 12.0.0 onwards
 ns.isSecret = issecretvalue or function() return false end
 
-ns.UNIT_DURATION = "d / h / m / s"
-
 ns.modules = {}
 ns.moduleList = {}
 ns.commands = {}
