@@ -61,6 +61,8 @@ L["Milestone announcements are off."] = "Meilenstein-Meldungen sind aus."
 L["/tally milestones [on|off] – announce reached milestones"] = "/tally milestones [on|off] – erreichte Meilensteine melden"
 
 -- Window and export
+L["Overview"] = "Übersicht"
+L["Statistic"] = "Statistik"
 L["Character"] = "Charakter"
 L["Export"] = "Export"
 L["Options"] = "Einstellungen"

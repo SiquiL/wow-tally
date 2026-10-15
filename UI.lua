@@ -172,11 +172,11 @@ local function HeaderText(entry)
 	return entry.label
 end
 
-local function EntryCell(entry)
+local function EntryCell(entry, role)
 	if not entry then
 		return { text = "–" }
 	end
-	return { text = ns.FormatCell(entry), sort = entry.value }
+	return { text = ns.FormatCell(entry), sort = entry.value, role = role }
 end
 
 local function EntryCells(entries, columns)
@@ -239,11 +239,57 @@ local function BuildModuleTable(module)
 	return { columns = columns, rows = rows }
 end
 
+local function OverviewLabel(module, entry)
+	if entry.label == module.label or entry.label == L["Total"] then
+		return module.label
+	end
+	return ("%s – %s"):format(module.label, entry.label)
+end
+
+local function BuildOverview()
+	local columns = {
+		{ key = "statistic", label = L["Statistic"], align = "LEFT", sortType = "text" },
+		{ key = "character", label = ns.CharLabel(ns.charKey, ns.char), align = "RIGHT", sortType = "number" },
+		{ key = "account", label = L["Account total"], align = "RIGHT", sortType = "number" },
+	}
+	local rows = {}
+
+	for _, module in ipairs(ns.moduleList) do
+		local characterEntries = ns.GetEntries(module, ns.char)
+		local accountEntries = ns.AccountEntries(module)
+		local accountByKey = {}
+		for _, entry in ipairs(accountEntries) do
+			accountByKey[entry.key] = entry
+		end
+
+		for _, entry in ipairs(characterEntries or {}) do
+			if entry.total then
+				local label = OverviewLabel(module, entry)
+				rows[#rows + 1] = {
+					key = module.key .. "." .. entry.key,
+					cells = {
+						{ text = label, sort = label:lower() },
+						EntryCell(entry),
+						EntryCell(accountByKey[entry.key], "total"),
+					},
+				}
+			end
+		end
+	end
+
+	return { columns = columns, rows = rows }
+end
+
 local function EnsureModuleViews()
 	if moduleViewsRegistered then
 		return
 	end
 	moduleViewsRegistered = true
+
+	ns.RegisterView("overview", {
+		label = L["Overview"],
+		Build = BuildOverview,
+	})
 
 	for _, module in ipairs(ns.moduleList) do
 		local current = module
@@ -325,7 +371,8 @@ local function LayoutColumns(model)
 		column.width = math.max(Measure("GameFontNormalSmall", SortLabel(column)), index == 1 and 80 or 32)
 		for _, row in ipairs(model.rows) do
 			local cell = row.cells[index]
-			local font = row.role == "total" and "GameFontNormalSmall" or "GameFontHighlightSmall"
+			local font = (row.role == "total" or cell and cell.role == "total")
+				and "GameFontNormalSmall" or "GameFontHighlightSmall"
 			column.width = math.max(column.width, Measure(font, cell and cell.text or "–"))
 		end
 		column.left = left
@@ -417,12 +464,16 @@ local function RenderRows()
 
 			for index, column in ipairs(currentModel.columns) do
 				local cell = RowCell(frame, index)
-				cell:SetFontObject(row.role == "total" and "GameFontNormalSmall" or "GameFontHighlightSmall")
+				local data = row.cells[index]
+				cell:SetFontObject(
+					(row.role == "total" or data and data.role == "total")
+						and "GameFontNormalSmall" or "GameFontHighlightSmall"
+				)
 				cell:ClearAllPoints()
 				cell:SetPoint("TOPLEFT", frame, "TOPLEFT", column.left, 0)
 				cell:SetSize(column.width, ROW_HEIGHT)
 				cell:SetJustifyH(column.align)
-				cell:SetText(row.cells[index] and row.cells[index].text or "–")
+				cell:SetText(data and data.text or "–")
 				cell:Show()
 			end
 			for index = #currentModel.columns + 1, #frame.cells do
