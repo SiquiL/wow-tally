@@ -43,6 +43,7 @@ read_globals = {
 	"GetAchievementInfo",
 	"GetCategoryNumAchievements",
 	"GetCoinTextureString",
+	"GetInstanceInfo",
 	"GetLocale",
 	"GetLootSlotInfo",
 	"GetLootSlotLink",

@@ -201,8 +201,12 @@ other restrictions have matching variables: `addonEncounterRestrictionsForced`,
 
 ### Zones
 
-Tally stores playtime and movement distance by the current `uiMapID`. Zone changes are
-detected through the zone events, with a five-second map check as a fallback. Distance comes
+Tally stores playtime and movement distance by the current `uiMapID`. Inside instances it
+uses the instance ID from `GetInstanceInfo` instead, stored as a negative key so it never
+collides with a map ID. That way classic dungeons, which have no map of their own, are
+counted too, and every floor and difficulty of an instance ends up in one row. Zone changes
+are detected through the zone events and `PLAYER_ENTERING_WORLD`, with a five-second check
+as a fallback. Distance comes
 from the same validated speed tick as the Steps module, so totals use identical movement
 modes and do not measure secret speed values.
 
@@ -210,6 +214,8 @@ The Zones tab combines data from every character enabled in the character filter
 playtime, distance on foot, mounted, swimming, flying and flight paths, plus the total
 distance for each zone. Empty movement columns follow the **Hide empty columns** option.
 Dungeon, raid, battleground, arena and scenario maps are marked next to the zone name.
+World and continent overview maps are hidden by their map type, so this works in every
+client regardless of its map IDs.
 
 ### Deaths
 
@@ -300,7 +306,8 @@ TallyDB = {
 			race = "Scourge", sex = 2, class = "ROGUE", level = 90, lastSeen = 1760000000,
 			steps = { foot = 0, mount = 0, swim = 0, flight = 0, taxi = 0, blind = 0 },   -- yards, seconds
 			zones = {
-				[2393] = { time = 3600, f = 1250, m = 8400, kind = "party" },             -- seconds, yards
+				[1413] = { time = 3600, f = 1250, m = 8400 },                             -- seconds, yards
+				[-43] = { time = 1800, f = 900, kind = "party", name = "Wailing Caverns" }, -- instance ID 43
 			},
 			deaths = { count = 0, seeded = true },
 			gold = { earned = 0, spent = 0, current = 0 },                                -- copper
