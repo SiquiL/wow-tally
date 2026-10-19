@@ -639,6 +639,19 @@ local function InitDB()
 		TallyDB.settings.milestones = true
 	end
 
+	local settings = TallyDB.settings
+	if settings.theme ~= nil and not ns.IsTheme(settings.theme) then
+		settings.theme = "standard"
+		ns.Say(L["An invalid theme was reset."])
+	end
+	if settings.backgroundOpacity ~= nil and not ns.ValidOpacity(settings.backgroundOpacity) then
+		settings.backgroundOpacity = nil
+	end
+	if settings.backgroundColor ~= nil and not ns.ValidColor(settings.backgroundColor) then
+		settings.backgroundColor = nil
+		ns.Say(L["An invalid background color was reset."])
+	end
+
 	local version = tonumber(TallyDB.version) or 0
 	if version < DB_VERSION then
 		MigrateDB(version)

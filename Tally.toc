@@ -15,6 +15,7 @@ locales\enUS.lua
 locales\deDE.lua
 Data.lua
 Core.lua
+Appearance.lua
 Milestones.lua
 UI.lua
 Export.lua

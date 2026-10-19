@@ -38,7 +38,8 @@ and more. Every counter is kept per character and summed for the whole account.
 - **Lifetime values** — deaths, quests, fishing and hearthstone uses start from the game's own statistics, playtime from `/played`
 - **Milestones** — a chat message when a counter passes a threshold
 - **Export** — every value as CSV or JSON, ready to copy
-- **Options panel** — milestone announcements, empty-column handling and a window-position reset
+- **Options panel** — milestone announcements, empty-column handling, a window-position reset and a bug report link
+- **Themes** — the standard look or a custom background color with automatic text contrast, plus a background opacity for every theme
 - **Remembered layout** — the window keeps its position and selected view between sessions
 - **Addon compartment entry** next to the minimap
 - **Addon restrictions** — secret values of patch 12.0.0 are detected and skipped instead of causing Lua errors
@@ -109,6 +110,15 @@ can be dragged and closes with Escape. Its toolbar opens the character filter, e
 options. Filter and export windows dock beside the main window. The export text is selected
 automatically, so it can be copied right away. The addon compartment next to the minimap has
 an entry as well: left-click toggles the window, right-click opens the options.
+
+The options panel starts with the appearance. **Theme** switches between _Standard_ and
+_Custom color_; **Background color** opens the game's color picker for the custom color, and
+the text switches to dark colors on a light background. **Background opacity** fades the
+backgrounds of every Tally window in either theme, while text, borders and the title bar stay
+opaque. All three apply to every character.
+
+**Report a bug** opens a small window with the address for a new GitHub issue, already
+selected for `Ctrl+C`.
 
 The options panel ends with a **Links** section. It shows a GitHub button and the address of
 the project page. Clicking either one selects the address, so the link can be copied with
@@ -300,6 +310,9 @@ TallyDB = {
 		hidden = {},
 		view = "overview",
 		window = { point = "CENTER", relativePoint = "CENTER", x = 0, y = 0 },
+		theme = "standard",                -- or "custom"
+		backgroundColor = { 0.08, 0.08, 0.08 }, -- optional, used by the custom theme
+		backgroundOpacity = 1,             -- optional, 0 to 1
 	},
 	chars = {
 		["Name-Realm"] = {
@@ -380,9 +393,10 @@ interface versions are the recommended way to support several clients.
 | `Core.lua`                | Module registry, database and migration, events, `/tally`, ID check, lifetime values |
 | `Data.lua`                | Step lengths, spell, item and statistic IDs, distance facts                          |
 | `Milestones.lua`          | Milestone check and `/tally milestones`                                              |
+| `Appearance.lua`          | Themes, background color and opacity of the windows                                  |
 | `UI.lua`                  | Window and its helper                                                                |
 | `Export.lua`              | CSV and JSON export                                                                  |
-| `Settings.lua`            | Options panel, `/tally options`, addon compartment                                   |
+| `Settings.lua`            | Options panel, bug report window, `/tally options`, addon compartment                |
 | `Settings.xml`            | Template for the link row of the options panel                                       |
 | `Textures\GitHubMark.tga` | GitHub mark shown in the options panel                                                |
 | `locales\enUS.lua`        | Translation table; the English text is the key                                       |

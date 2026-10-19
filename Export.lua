@@ -110,6 +110,7 @@ local function Build()
 
 	edit = scroll.EditBox
 	edit:SetFontObject("ChatFontNormal")
+	ns.StyleText(edit)
 	edit:SetWidth(520)
 	edit:SetScript("OnEscapePressed", function()
 		window:Hide()
