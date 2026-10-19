@@ -23,10 +23,9 @@ local INSTANCE_LABELS = {
 	arena = L["Arena"],
 	scenario = L["Scenario"],
 }
-local HIDDEN_MAP_IDS = {
-	[12] = true, -- Kalimdor
-	[13] = true, -- Eastern Kingdoms
-}
+-- Continent and world overviews are hidden by map type, because their IDs differ between
+-- clients (Kalimdor is 12 in retail and 1414 in classic)
+local CONTINENT_MAP_TYPE = Enum and Enum.UIMapType and Enum.UIMapType.Continent or 2
 
 local zones
 local currentMapID
@@ -43,9 +42,22 @@ local function ZoneEntry(mapID)
 	return entry
 end
 
-local function RecordKind(entry)
+-- Instances are keyed by their negated instance ID, so they never collide with a uiMapID.
+-- Classic dungeons have no map at all, and multi-floor instances would otherwise be split.
+local function CurrentZone()
 	local inInstance, instanceType = IsInInstance()
-	entry.kind = inInstance and instanceType ~= "none" and instanceType or nil
+	local kind = inInstance and instanceType ~= "none" and instanceType or nil
+	if kind then
+		local name, _, _, _, _, _, _, instanceID = GetInstanceInfo()
+		if type(instanceID) == "number" and instanceID > 0 then
+			return -instanceID, kind, name
+		end
+	end
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if type(mapID) == "number" then
+		return mapID, kind
+	end
 end
 
 local function AddElapsed(now)
@@ -59,11 +71,15 @@ local function RefreshZone()
 	local now = GetTime()
 	AddElapsed(now)
 
-	local mapID = C_Map.GetBestMapForUnit("player")
-	currentMapID = type(mapID) == "number" and mapID or nil
+	local key, kind, name = CurrentZone()
+	currentMapID = key
 	lastUpdate = now
-	if currentMapID then
-		RecordKind(ZoneEntry(currentMapID))
+	if key then
+		local entry = ZoneEntry(key)
+		entry.kind = kind
+		if type(name) == "string" and name ~= "" then
+			entry.name = name
+		end
 	end
 end
 
@@ -95,9 +111,17 @@ local function Kilometers(yards)
 	return (yards or 0) * ns.YARD_TO_METER / 1000
 end
 
-local function ZoneName(mapID, kind)
+local function IsHiddenMap(mapID)
+	if mapID < 0 then
+		return false
+	end
 	local info = C_Map.GetMapInfo(mapID)
-	local name = info and info.name or L["Unknown zone (%d)"]:format(mapID)
+	return info and type(info.mapType) == "number" and info.mapType <= CONTINENT_MAP_TYPE or false
+end
+
+local function ZoneName(mapID, kind, storedName)
+	local info = mapID > 0 and C_Map.GetMapInfo(mapID)
+	local name = storedName or info and info.name or L["Unknown zone (%d)"]:format(math.abs(mapID))
 	if kind then
 		name = ("%s (%s)"):format(name, INSTANCE_LABELS[kind] or kind)
 	end
@@ -110,6 +134,7 @@ local module = {
 		"ZONE_CHANGED",
 		"ZONE_CHANGED_INDOORS",
 		"ZONE_CHANGED_NEW_AREA",
+		"PLAYER_ENTERING_WORLD",
 	},
 }
 
@@ -187,6 +212,7 @@ function module:BuildView()
 				end
 				target.time = target.time + (source.time or 0)
 				target.kind = target.kind or source.kind
+				target.name = target.name or source.name
 				for _, mode in ipairs(VIEW_MODES) do
 					local yards = source[mode.key] or 0
 					target[mode.key] = (target[mode.key] or 0) + yards
@@ -224,8 +250,8 @@ function module:BuildView()
 	local rows = {}
 	for mapID, entry in pairs(combined) do
 		local totalYards = TotalYards(entry)
-		if not HIDDEN_MAP_IDS[mapID] and (entry.time > 0 or totalYards > 0) then
-			local name = ZoneName(mapID, entry.kind)
+		if not IsHiddenMap(mapID) and (entry.time > 0 or totalYards > 0) then
+			local name = ZoneName(mapID, entry.kind, entry.name)
 			local cells = {
 				{ text = name, sort = name:lower() },
 				{ text = ns.FormatDuration(entry.time), sort = entry.time },
