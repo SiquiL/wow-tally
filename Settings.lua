@@ -11,7 +11,7 @@ local ISSUES_URL = GITHUB_URL .. "/issues/new"
 
 function ns.ShowBugReport()
 	if not bugReport then
-		bugReport = ns.CreateWindow("TallyBugReport", L["Report a bug"], 440, 190)
+		bugReport = ns.CreateWindow("TallyBugReport", 440, 190, L["Report a bug"])
 
 		local text = bugReport:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 		text:SetPoint("TOPLEFT", 18, -36)
