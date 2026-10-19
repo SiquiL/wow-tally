@@ -104,6 +104,24 @@ L["The window position has been reset."] = "Die Fensterposition wurde zurückges
 L["/tally options – open the options panel"] = "/tally options – Optionsfenster öffnen"
 L["Left-click: toggle the window"] = "Linksklick: Fenster ein-/ausblenden"
 L["Right-click: open the options"] = "Rechtsklick: Optionen öffnen"
+L["Report a bug"] = "Fehler melden"
+L["Found a bug or have an idea? Please open an issue on GitHub and describe what happened."] = "Einen Fehler gefunden oder eine Idee? Bitte erstelle ein Issue auf GitHub und beschreibe, was passiert ist."
+L["Close"] = "Schließen"
+
+-- Appearance
+L["Theme"] = "Design"
+L["Standard"] = "Standard"
+L["Custom color"] = "Eigene Farbe"
+L["Changes Tally and its windows for all characters."] = "Ändert Tally und seine Fenster für alle Charaktere."
+L["Background color"] = "Hintergrundfarbe"
+L["Choose color"] = "Farbe auswählen"
+L["Used by the Custom color theme. Text contrast adjusts automatically. The opacity applies to every theme."] = "Wird vom Design „Eigene Farbe“ verwendet. Der Textkontrast passt sich automatisch an. Die Deckkraft gilt für alle Designs."
+L["Background opacity"] = "Hintergrund-Deckkraft"
+L["Transparency of the Tally windows in every theme. Text and borders stay opaque."] = "Transparenz der Tally-Fenster in allen Designs. Text und Rahmen bleiben deckend."
+L["The color picker is not available in this client."] = "Die Farbauswahl ist in diesem Client nicht verfügbar."
+L["Unknown theme."] = "Unbekanntes Design."
+L["An invalid theme was reset."] = "Ein ungültiges Design wurde zurückgesetzt."
+L["An invalid background color was reset."] = "Eine ungültige Hintergrundfarbe wurde zurückgesetzt."
 
 -- Steps
 L["Steps"] = "Schritte"

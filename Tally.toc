@@ -2,7 +2,7 @@
 ## Title: Tally
 ## Notes: Counts steps, deaths, gold, quests and more per character and for the whole account.
 ## Notes-deDE: Zählt Schritte, Tode, Gold, Quests und mehr pro Charakter und für den ganzen Account.
-## Version: 1.2.1
+## Version: 1.3.0
 ## Author: SiquiL
 ## IconTexture: Interface\Icons\INV_Misc_PocketWatch_01
 ## AddonCompartmentFunc: Tally_OnAddonCompartmentClick
@@ -15,6 +15,7 @@ locales\enUS.lua
 locales\deDE.lua
 Data.lua
 Core.lua
+Appearance.lua
 Milestones.lua
 UI.lua
 Export.lua

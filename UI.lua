@@ -77,6 +77,7 @@ function ns.CreateWindow(name, width, height, title)
 	created:SetPoint("CENTER")
 	created:SetFrameStrata("DIALOG")
 	created:SetClampedToScreen(true)
+	ns.StyleFrame(created)
 	created:SetMovable(true)
 	created:EnableMouse(true)
 	created:RegisterForDrag("LeftButton")
@@ -604,10 +605,9 @@ local function RenderRows()
 			for index, column in ipairs(currentModel.columns) do
 				local cell = RowCell(frame, index)
 				local data = row.cells[index]
-				cell:SetFontObject(
-					(row.role == "total" or data and data.role == "total")
-						and "GameFontNormalSmall" or "GameFontHighlightSmall"
-				)
+				local total = row.role == "total" or data and data.role == "total"
+				cell:SetFontObject(total and "GameFontNormalSmall" or "GameFontHighlightSmall")
+				cell:SetTextColor(ns.ThemeColor(total and "heading" or "body"))
 				cell:ClearAllPoints()
 				cell:SetPoint("TOPLEFT", frame, "TOPLEFT", column.left, 0)
 				cell:SetSize(column.width, ROW_HEIGHT)
@@ -687,9 +687,9 @@ local function Refresh()
 		button:EnableMouse(current.sortable ~= false)
 		local sortState = sortStates[selected.key]
 		if current.sortable ~= false and sortState and sortState.key == current.key then
-			button:GetFontString():SetTextColor(1, 0.82, 0)
+			button:GetFontString():SetTextColor(ns.ThemeColor("heading"))
 		else
-			button:GetFontString():SetTextColor(1, 1, 1)
+			button:GetFontString():SetTextColor(ns.ThemeColor("body"))
 		end
 		button:SetScript("OnClick", function()
 			if current.sortable ~= false then
@@ -715,6 +715,7 @@ local function Refresh()
 	window:SetSize(windowWidth, -TABLE_TOP + HEADER_HEIGHT + visibleRows * ROW_HEIGHT + MARGIN)
 	LayoutCharacterPanel(windowWidth, tableHasScroll, visibleRows)
 end
+ns.RefreshWindow = Refresh
 
 local function Select(view)
 	selected = view
@@ -805,6 +806,7 @@ local function CharacterFilterRow(slot)
 	row.label:SetPoint("RIGHT", row, "RIGHT", -60, 0)
 	row.label:SetJustifyH("LEFT")
 	row.label:SetWordWrap(false)
+	ns.StyleText(row.label)
 
 	row.reset = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
 	row.reset:SetSize(24, 20)
@@ -984,7 +986,7 @@ local function Build()
 	measure:SetPoint("TOPLEFT", window, "BOTTOMLEFT", -1000, -1000)
 	measure:SetAlpha(0)
 
-	headerBackground = window:CreateTexture(nil, "BACKGROUND")
+	headerBackground = window:CreateTexture(nil, "BACKGROUND", nil, 3)
 	headerBackground:SetColorTexture(0, 0, 0, 0.3)
 
 	characterPanel = CreateFrame("Frame", nil, window)
@@ -1019,6 +1021,7 @@ local function Build()
 	characterDetails:SetPoint("RIGHT", characterPanel, "RIGHT", -4, 0)
 	characterDetails:SetJustifyH("LEFT")
 	characterDetails:SetWordWrap(false)
+	ns.StyleText(characterDetails)
 
 	scroll = CreateFrame("ScrollFrame", "TallyTableScrollFrame", window, "FauxScrollFrameTemplate")
 	scroll:SetScript("OnVerticalScroll", function(self, offset)

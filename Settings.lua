@@ -4,8 +4,70 @@ local L = ns.L
 local category
 local layout
 local registered = {}
+local bugReport
 
 local GITHUB_URL = "https://github.com/SiquiL/wow-tally"
+local ISSUES_URL = GITHUB_URL .. "/issues/new"
+
+function ns.ShowBugReport()
+	if not bugReport then
+		bugReport = ns.CreateWindow("TallyBugReport", 440, 190, L["Report a bug"])
+
+		local text = bugReport:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+		text:SetPoint("TOPLEFT", 18, -36)
+		text:SetWidth(404)
+		text:SetJustifyH("LEFT")
+		text:SetText(L["Found a bug or have an idea? Please open an issue on GitHub and describe what happened."])
+		ns.StyleText(text)
+
+		-- Read-only: the game cannot open a browser, so the address is selected for Ctrl+C
+		local link = CreateFrame("EditBox", nil, bugReport, "InputBoxTemplate")
+		link:SetSize(396, 24)
+		link:SetPoint("TOPLEFT", 24, -86)
+		link:SetAutoFocus(false)
+		link:SetFontObject("GameFontHighlightSmall")
+		link:SetText(ISSUES_URL)
+		link:SetCursorPosition(0)
+		link:SetScript("OnEscapePressed", function()
+			bugReport:Hide()
+		end)
+		link:SetScript("OnEnterPressed", link.ClearFocus)
+		link:SetScript("OnEditFocusGained", function(editBox)
+			editBox:HighlightText()
+		end)
+		link:SetScript("OnMouseUp", function(editBox)
+			editBox:HighlightText()
+		end)
+		link:SetScript("OnTextChanged", function(editBox, userInput)
+			if userInput then
+				editBox:SetText(ISSUES_URL)
+				editBox:HighlightText()
+			end
+		end)
+		bugReport.link = link
+
+		local hint = bugReport:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		hint:SetPoint("TOPLEFT", 18, -118)
+		hint:SetWidth(404)
+		hint:SetJustifyH("LEFT")
+		hint:SetText(L["Click the address and press Ctrl+C to copy it."] .. " "
+			.. L["The game cannot open a browser by itself."])
+		ns.StyleText(hint)
+
+		local close = CreateFrame("Button", nil, bugReport, "UIPanelButtonTemplate")
+		close:SetSize(100, 24)
+		close:SetPoint("BOTTOM", 0, 12)
+		close:SetText(CLOSE or L["Close"])
+		close:SetScript("OnClick", function()
+			bugReport:Hide()
+		end)
+		bugReport:SetScript("OnHide", function()
+			link:ClearFocus()
+		end)
+	end
+	bugReport:Show()
+	bugReport.link:SetFocus()
+end
 
 -- The settings list builds its rows from a mixin on the template, and that mixin is only
 -- looked up once the panel is opened, so it can be assembled after the client is ready
@@ -81,7 +143,7 @@ local function PrepareLinkTemplate()
 		local logo = button:CreateTexture(nil, "ARTWORK")
 		logo:SetPoint("TOPLEFT", 5, -5)
 		logo:SetPoint("BOTTOMRIGHT", -5, 5)
-		logo:SetTexture("Interface\\AddOns\\Tally\\Textures\\GitHubMark")
+		logo:SetTexture("Interface\\AddOns\\Tally\\textures\\GitHubMark")
 		self.Link = box
 	end
 
@@ -131,6 +193,56 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 	end
 
 	category, layout = Settings.RegisterVerticalLayoutCategory("Tally")
+
+	if Settings.CreateDropdown and Settings.CreateControlTextContainer then
+		local theme = Settings.RegisterAddOnSetting(category, "Tally_Theme", "theme",
+			TallyDB.settings, "string", L["Theme"], "standard")
+		theme:SetValueChangedCallback(function(_, value)
+			ns.SetTheme(value)
+		end)
+		Settings.CreateDropdown(category, theme, function()
+			local options = Settings.CreateControlTextContainer()
+			for _, entry in ipairs(ns.THEMES) do
+				options:Add(entry.id, L[entry.label])
+			end
+			return options:GetData()
+		end, L["Changes Tally and its windows for all characters."])
+		registered.theme = theme
+	end
+
+	local opacity
+	if CreateSettingsButtonInitializer then
+		layout:AddInitializer(CreateSettingsButtonInitializer(L["Background color"], L["Choose color"], function()
+			ns.PickColor(ns.BackgroundColor(), function(color, alpha)
+				TallyDB.settings.backgroundColor = color
+				-- The slider applies the opacity, so an open panel shows the new value
+				if opacity and alpha ~= ns.BackgroundOpacity() then
+					opacity:SetValue(alpha)
+				else
+					ns.SetBackgroundOpacity(alpha)
+				end
+				ns.RefreshAppearance()
+			end, ns.BackgroundOpacity())
+		end, L["Used by the Custom color theme. Text contrast adjusts automatically. The opacity applies to every theme."], true))
+	end
+
+	if Settings.CreateSlider and Settings.CreateSliderOptions then
+		opacity = Settings.RegisterAddOnSetting(category, "Tally_BackgroundOpacity", "backgroundOpacity",
+			TallyDB.settings, "number", L["Background opacity"], 1)
+		opacity:SetValueChangedCallback(function(_, value)
+			ns.SetBackgroundOpacity(value)
+		end)
+		local options = Settings.CreateSliderOptions(0, 1, 0.05)
+		if options.SetLabelFormatter and MinimalSliderWithSteppersMixin then
+			options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+				return ("%d%%"):format(math.floor(value * 100 + 0.5))
+			end)
+		end
+		Settings.CreateSlider(category, opacity, options,
+			L["Transparency of the Tally windows in every theme. Text and borders stay opaque."])
+		registered.backgroundOpacity = opacity
+	end
+
 	local milestones = Settings.RegisterAddOnSetting(category, "Tally_Milestones", "milestones",
 		TallyDB.settings, "boolean", L["Announce milestones"], true)
 	Settings.CreateCheckbox(category, milestones, L["Print a chat message when a counter reaches a milestone."])
@@ -148,6 +260,15 @@ ns.loginHooks[#ns.loginHooks + 1] = function()
 			resetLabel,
 			ns.ResetWindowPosition,
 			L["Move the Tally window back to the center of the screen."],
+			true
+		))
+
+		local reportLabel = L["Report a bug"]
+		layout:AddInitializer(CreateSettingsButtonInitializer(
+			reportLabel,
+			reportLabel,
+			ns.ShowBugReport,
+			L["Found a bug or have an idea? Please open an issue on GitHub and describe what happened."],
 			true
 		))
 	end
