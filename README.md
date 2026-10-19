@@ -474,12 +474,12 @@ Raise `## Version` in `Tally.toc` and commit. Then tag that commit and build a z
 folder is `Tally`, so it can be extracted into `Interface\AddOns` as it is:
 
 ```powershell
-git tag v1.2.0
-git push origin main v1.2.0
-git archive --format zip --prefix Tally/ --output Tally-1.2.0.zip v1.2.0
+git tag v1.2.1
+git push origin main v1.2.1
+git archive --format zip --prefix Tally/ --output Tally-1.2.1.zip v1.2.1
 ```
 
-Create the GitHub release from that tag and attach `Tally-1.2.0.zip`. The release badge at
+Create the GitHub release from that tag and attach `Tally-1.2.1.zip`. The release badge at
 the top of this file follows the newest release on its own.
 
 `.gitattributes` marks everything the game does not load (README, `docs`, documentation
