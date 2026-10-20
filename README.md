@@ -11,13 +11,22 @@
 [![Lua 5.1](https://img.shields.io/badge/Lua-5.1-2C2D72?logo=lua&logoColor=white)](https://www.lua.org/manual/5.1/)
 [![Locales: English and German](https://img.shields.io/badge/locales-English%20%7C%20Deutsch-59636e)](#translations)
 
-[Installation](#installation) · [Usage](#usage) · [How it works](#how-it-works) · [Saved data](#saved-data) · [Development](#development)
+[Features](#features) · [Screenshots](#screenshots) · [Installation](#installation) · [Usage](#usage) · [How it works](#how-it-works) · [Saved data](#saved-data) · [Development](#development)
 
 </div>
 
 Tally is a small World of Warcraft addon that keeps count of what your characters do: how far
 they travel, how long they play, how often they die, how much gold passes through their hands
 and more. Every counter is kept per character and summed for the whole account.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/overview-demo.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/overview-demo-light.jpg">
+  <img alt="Tally's overview with a character model, fictional character statistics and highlighted account totals" src="assets/screenshots/overview-demo.jpg" width="100%">
+</picture>
+<p align="center"><em>In-game UI with fictional character names and sample statistics. Images are edited for demonstration.</em></p>
+
+## Features
 
 | Module      | Counts                                                                                  |
 | ----------- | --------------------------------------------------------------------------------------- |
@@ -33,7 +42,7 @@ and more. Every counter is kept per character and summed for the whole account.
 
 - **Overview and module tables** — the current character with a 3D model and class portrait, plus highlighted account totals in a consistent module order
 - **Character ranking** — compare every included character across selected headline metrics
-- **Character filter** — identify stored characters by class icon, include or exclude them from totals, reports, rankings and exports, reset or remove them
+- **[Character filter](#choose-which-characters-count)** — identify stored characters by class icon, include or exclude them from totals, reports, rankings and exports, reset or remove them
 - **Zone table** — account-wide playtime and distance per movement mode for every visited zone, excluding continent overview maps
 - **Lifetime values** — deaths, quests, fishing and hearthstone uses start from the game's own statistics, playtime from `/played`
 - **Milestones** — a chat message when a counter passes a threshold
@@ -44,6 +53,47 @@ and more. Every counter is kept per character and summed for the whole account.
 - **Addon compartment entry** next to the minimap
 - **Addon restrictions** — secret values of patch 12.0.0 are detected and skipped instead of causing Lua errors
 - **English and German**, following the client language
+
+## Screenshots
+
+### Compare your characters
+
+The ranking brings the included characters together in one table. Click a column heading to
+compare distance, playtime, gold, quests and other headline metrics.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/ranking-demo.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/ranking-demo-light.jpg">
+  <img alt="Tally's ranking with two fictional characters and populated distance, zone, gold, quest, jump, teleport and playtime columns" src="assets/screenshots/ranking-demo.jpg" width="100%">
+</picture>
+
+### Choose which characters count
+
+The character button in the toolbar opens a filter beside the main window. Use the
+checkboxes to include or exclude stored characters, or switch quickly with **All** and
+**Only current**. The selection applies to account totals, reports, rankings and exports.
+Class icons help identify each character; the row buttons let you reset statistics or remove
+a stored character, with confirmation.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/characters-demo.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/characters-demo-light.jpg">
+  <img alt="Tally's playtime table beside the character filter, showing class icons, fictional character names, inclusion checkboxes and reset and remove buttons" src="assets/screenshots/characters-demo.jpg" width="100%">
+</picture>
+
+### Follow the journey and the work along the way
+
+The zone view breaks down account-wide time and distance by movement mode. Module tabs
+such as Professions show each character's contribution and the combined account total.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/modules-demo.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/modules-demo-light.jpg">
+  <img alt="Tally's zone and profession tables with sample movement distances, playtimes, gathering counts, crafting counts and account totals" src="assets/screenshots/modules-demo.jpg" width="100%">
+</picture>
+
+All screenshots use fictional names and example values, not live character data.
+Open an image in a new tab to view it at full size.
 
 ## Installation
 
@@ -133,14 +183,14 @@ after an edit.
 ### Example output
 
 ```
-Tally: Steps – Siqlock-Thunderstrike, step length 0.75 m
+Tally: Steps – Auralis-Emberfall, step length 0.75 m
   On foot: 12,480 steps (9.36 km)
   Mounted: 2.40 km
   Swimming: 0.14 km
   Total distance: 11.90 km
   Account total: 30.75 km
   Fun fact: the account has covered 72% of a marathon.
-Tally: Deaths – Siqlock-Thunderstrike
+Tally: Deaths – Auralis-Emberfall
   Deaths: 7
   Account total: 19
 ```
